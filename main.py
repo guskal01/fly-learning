@@ -56,7 +56,7 @@ def get_ground_truth(zod_frames, frame_id):
 def load_ground_truth(path):
     with open(path) as json_file:
         gt = json.load(json_file)
-        # Skippa tillfällingt för att en bild gick sänder
+        # Skippa tillfälligt för en bild gick sönder
         gt.pop('005350', None)
         for f in gt.keys():
             gt[f] = np.array(gt[f])
@@ -104,13 +104,11 @@ print(len(ground_truth))
 random_order = list(ground_truth)
 random.shuffle(random_order)
 
-transform = transforms.Compose([transforms.ToTensor()])
-
 testset_size = int(len(random_order)*0.1)
 defenceset_size = int(len(random_order)*0.001)
-testset = ZodDataset(zod_frames, random_order[:testset_size], ground_truth, transform=transform)
-defenceset = ZodDataset(zod_frames, random_order[testset_size:testset_size+defenceset_size], ground_truth, transform=transform)
-trainset = ZodDataset(zod_frames, random_order[defenceset_size:], ground_truth, transform=transform)
+testset = ZodDataset(zod_frames, random_order[:testset_size], ground_truth)
+defenceset = ZodDataset(zod_frames, random_order[testset_size:testset_size+defenceset_size], ground_truth)
+trainset = ZodDataset(zod_frames, random_order[defenceset_size:], ground_truth)
 
 testloader = DataLoader(testset, batch_size=64)
 defenceloader = DataLoader(defenceset, batch_size=64)
