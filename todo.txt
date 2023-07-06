@@ -1,0 +1,1 @@
+Kolla om bilderna borde normaliserad med mean&std i models.py.
