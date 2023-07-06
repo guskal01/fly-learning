@@ -119,14 +119,17 @@ trainloader = DataLoader(trainset, batch_size=64)
 net = Net().to(device)
 net.train()
 opt = torch.optim.Adam(net.parameters(), lr=0.001)
-for batch_idx, (data, target) in enumerate(trainloader):
-    data, target = data.to(device), target.to(device)
-    opt.zero_grad()
-    output = net(data)
-    loss = net.loss_fn(output, target)
-    loss.backward()
-    opt.step()
+epochs = 1
 
-    print(loss.item())
+for epoch in range(1, epochs+1):
+    for batch_idx, (data, target) in enumerate(trainloader):
+        data, target = data.to(device), target.to(device)
+        opt.zero_grad()
+        output = net(data)
+        loss = net.loss_fn(output, target)
+        loss.backward()
+        opt.step()
+
+        print(loss.item())
 
 np.savez("model.npz", np.array(get_parameters(net), dtype=object))
