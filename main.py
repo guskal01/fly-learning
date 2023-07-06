@@ -2,6 +2,7 @@ import random
 import json
 
 import numpy as np
+from matplotlib import pyplot as plt
 import torch
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
@@ -112,14 +113,19 @@ trainset = ZodDataset(zod_frames, random_order[defenceset_size:], ground_truth)
 
 testloader = DataLoader(testset, batch_size=64)
 defenceloader = DataLoader(defenceset, batch_size=64)
-trainloader = DataLoader(trainset, batch_size=64)
+trainloader = DataLoader(trainset, batch_size=32)
 
 net = Net().to(device)
-net.train()
 opt = torch.optim.Adam(net.parameters(), lr=0.001)
-epochs = 1
+epochs = 10
+
+epoch_train_losses = []
+epoch_test_losses = []
 
 for epoch in range(1, epochs+1):
+    print("Epoch", epoch)
+    net.train()
+    batch_train_losses = []
     for batch_idx, (data, target) in enumerate(trainloader):
         data, target = data.to(device), target.to(device)
         opt.zero_grad()
@@ -128,6 +134,23 @@ for epoch in range(1, epochs+1):
         loss.backward()
         opt.step()
 
+        batch_train_losses.append(loss.item())
         print(loss.item())
+    epoch_train_losses.append(sum(batch_train_losses)/len(batch_train_losses))
+
+    net.eval()
+    batch_test_losses = []
+    for data,target in testloader:
+        data, target = data.to(device), target.to(device)
+        pred = net(data)
+        batch_test_losses.append(net.loss_fn(pred, target).item())
+    epoch_test_losses.append(sum(batch_test_losses)/len(batch_test_losses))
+    print("Test loss:", epoch_test_losses[-1])
+    print()
+
+plt.plot(range(1, epochs+1), epoch_train_losses, label="Train loss")
+plt.plot(range(1, epochs+1), epoch_test_losses, label="Test loss")
+plt.legend()
+plt.savefig('loss.png')
 
 np.savez("model.npz", np.array(get_parameters(net), dtype=object))
