@@ -109,7 +109,7 @@ testset_size = int(len(random_order)*0.1)
 defenceset_size = int(len(random_order)*0.001)
 testset = ZodDataset(zod_frames, random_order[:testset_size], ground_truth)
 defenceset = ZodDataset(zod_frames, random_order[testset_size:testset_size+defenceset_size], ground_truth)
-trainset = ZodDataset(zod_frames, random_order[defenceset_size:], ground_truth)
+trainset = ZodDataset(zod_frames, random_order[testset_size+defenceset_size:], ground_truth)
 
 testloader = DataLoader(testset, batch_size=64)
 defenceloader = DataLoader(defenceset, batch_size=64)
