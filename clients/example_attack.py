@@ -2,7 +2,7 @@ from constants import *
 
 from torch.utils.data import Dataset, DataLoader
 
-class Attacker():
+class ExampleAttack():
     def __init__(self):
         pass
 
@@ -15,6 +15,7 @@ class Attacker():
             print("Epoch", epoch)
             batch_train_losses = []
             for data, target in dataloader:
+                # Set target to something crazy unreasonable
                 data, target = data.to(device), -100*target.to(device)
                 opt.zero_grad()
                 output = net(data)
@@ -25,6 +26,3 @@ class Attacker():
                 batch_train_losses.append(loss.item())
             epoch_train_losses.append(sum(batch_train_losses)/len(batch_train_losses))
         return epoch_train_losses
-
-    def attack(self):
-        pass

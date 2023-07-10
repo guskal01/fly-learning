@@ -1,5 +1,5 @@
 
-class Aggregator():
+class FedAvg():
     def __init__(self, dataloader):
         self.dataloader = dataloader
     

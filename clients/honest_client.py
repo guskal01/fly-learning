@@ -2,7 +2,7 @@ from constants import *
 
 from torch.utils.data import Dataset, DataLoader
 
-class Client():
+class HonestClient():
     def __init__(self):
         pass
 
@@ -25,6 +25,3 @@ class Client():
                 batch_train_losses.append(loss.item())
             epoch_train_losses.append(sum(batch_train_losses)/len(batch_train_losses))
         return epoch_train_losses
-
-    def attack(self):
-        pass
