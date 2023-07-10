@@ -69,6 +69,7 @@ for round in range(1, GLOBAL_ROUNDS+1):
         print("Client", client_idx)
         net_copy = Net().to(device)
         net_copy.load_state_dict(net.state_dict())
+        # Resetting momentum each round
         opt_copy = torch.optim.Adam(net_copy.parameters(), lr=LR)
         
         client_loss = clients[client_idx].train_client(net_copy, opt_copy, trainsets.pop())[-1]
