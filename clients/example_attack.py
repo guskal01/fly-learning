@@ -1,6 +1,6 @@
 from constants import *
 
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import DataLoader
 
 class ExampleAttack():
     def __init__(self):

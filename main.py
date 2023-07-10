@@ -19,6 +19,7 @@ from defences.clip_defence import ClipDefence
 def get_parameters(net):
     return [val.cpu().numpy() for _, val in net.state_dict().items()]
 
+random.seed(5)
 
 zod_frames = ZodFrames(dataset_root="/mnt/ZOD", version="full")
 
