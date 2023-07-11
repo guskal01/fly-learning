@@ -11,8 +11,8 @@ class Net(pl.LightningModule):
         
         self.model = models.mobilenet_v3_large(weights=models.MobileNet_V3_Large_Weights.IMAGENET1K_V1)
 
-        for param in self.model.parameters():
-            param.requires_grad = False
+        #for param in self.model.parameters():
+        #    param.requires_grad = False
 
         self.change_head_net()
 
