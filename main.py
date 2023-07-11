@@ -64,7 +64,6 @@ clients.extend([ShuffleAttacker() for _ in range(N_ATTACKERS)])
 random.shuffle(clients)
 
 net = Net().to(device)
-opt = torch.optim.Adam(net.parameters(), lr=LR)
 
 round_train_losses = []
 round_test_losses = []
@@ -77,9 +76,9 @@ for round in range(1, GLOBAL_ROUNDS+1):
         net_copy = Net().to(device)
         net_copy.load_state_dict(net.state_dict())
         # Resetting momentum each round
-        opt_copy = torch.optim.Adam(net_copy.parameters(), lr=LR)
+        opt = torch.optim.Adam(net_copy.parameters(), lr=LR)
         
-        client_loss = clients[client_idx].train_client(net_copy, opt_copy, trainsets.pop())[-1]
+        client_loss = clients[client_idx].train_client(net_copy, opt, trainsets.pop())[-1]
         print(f"Client: {client_idx} Type: {clients[client_idx].__class__.__name__} Loss: {client_loss}")
         
         train_losses.append(client_loss)
