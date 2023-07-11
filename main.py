@@ -1,4 +1,6 @@
 import random
+from datetime import datetime
+import os
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -11,22 +13,28 @@ from zod import ZodFrames
 from dataset import ZodDataset, load_ground_truth
 from constants import *
 from models import Net
+
 from clients.honest_client import HonestClient
 from clients.example_attack import ExampleAttack
+from clients.shuffle_attack import ShuffleAttacker
+from clients.no_train_attack import NoTrainClient
+from clients.gradient_ascent_attack import GAClient
+
 from defences.fed_avg import FedAvg
 from defences.clip_defence import ClipDefence
+from defences.axels_defense import AxelsDefense
 
 def get_parameters(net):
     return [val.cpu().numpy() for _, val in net.state_dict().items()]
 
-random.seed(5)
+random.seed(9)
 
 zod_frames = ZodFrames(dataset_root="/mnt/ZOD", version="full")
 
 ground_truth = load_ground_truth("/mnt/ZOD/ground_truth.json")
 print(len(ground_truth))
 
-random_order = list(ground_truth)
+random_order = list(ground_truth)[:int(len(ground_truth)*PERCENTAGE_OF_DATA)]
 random.shuffle(random_order)
 
 transforms = transforms.Compose([
@@ -50,9 +58,9 @@ for i in range(n_sets):
 testloader = DataLoader(testset, batch_size=64)
 defenceloader = DataLoader(defenceset, batch_size=64)
 
-aggregator = ClipDefence(defenceloader)
+aggregator = FedAvg(defenceloader)
 clients = [HonestClient() for _ in range(CLIENTS-N_ATTACKERS)]
-clients.extend([ExampleAttack() for _ in range(N_ATTACKERS)])
+clients.extend([ShuffleAttacker() for _ in range(N_ATTACKERS)])
 random.shuffle(clients)
 
 net = Net().to(device)
@@ -66,13 +74,13 @@ for round in range(1, GLOBAL_ROUNDS+1):
     train_losses = []
     nets = []
     for client_idx in selected:
-        print("Client", client_idx)
         net_copy = Net().to(device)
         net_copy.load_state_dict(net.state_dict())
         # Resetting momentum each round
         opt_copy = torch.optim.Adam(net_copy.parameters(), lr=LR)
         
         client_loss = clients[client_idx].train_client(net_copy, opt_copy, trainsets.pop())[-1]
+        print(f"Client: {client_idx} Type: {clients[client_idx].__class__.__name__} Loss: {client_loss}")
         
         train_losses.append(client_loss)
         nets.append(net_copy.state_dict())
@@ -92,9 +100,16 @@ for round in range(1, GLOBAL_ROUNDS+1):
     print(f"Test loss: {round_test_losses[-1]:.4f}")
     print()
 
+now = datetime.now()
+dt_string = now.strftime("%d-%m-%Y-%H:%M")
+os.mkdir(f"./results/{dt_string}")
+
 plt.plot(range(1, GLOBAL_ROUNDS+1), round_train_losses, label="Train loss")
 plt.plot(range(1, GLOBAL_ROUNDS+1), round_test_losses, label="Test loss")
 plt.legend()
-plt.savefig('loss.png')
+plt.savefig(f'./results/{dt_string}/loss.png')
 
-np.savez("model.npz", np.array(get_parameters(net), dtype=object))
+np.savez(f"./results/{dt_string}/model.npz", np.array(get_parameters(net), dtype=object))
+
+path = f"./results/{dt_string}/"
+aggregator.plot_stats(path)
