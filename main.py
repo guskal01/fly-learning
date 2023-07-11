@@ -114,9 +114,9 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
     np.savez(f"{path}/model.npz", np.array(get_parameters(net), dtype=object))
 
     json_obj = {
-        "attacker": attacker.__class__.__name__,
+        "attacker": attacker.__name__,
         "attack_param": attack_param,
-        "defence": defence.__class__.__name__,
+        "defence": defence.__name__,
         "defence_param": defence_param,
         "lr": lr,
         "n_attackers": n_attackers
