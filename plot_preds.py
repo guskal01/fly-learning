@@ -17,6 +17,16 @@ import torch
 import colorsys
 from PIL import Image
 from constants import *
+from collections import OrderedDict
+
+from models import Net
+
+def set_parameters(net, parameters):
+    params_dict = zip(net.state_dict().keys(), parameters)
+    state_dict = OrderedDict(
+        {k: torch.Tensor(v) if v.shape != torch.Size([]) else torch.Tensor([0]) for k, v in params_dict})
+    net.load_state_dict(state_dict, strict=True)
+
 
 def get_ground_truth(zod_frames, frame_id):
     # get frame
@@ -188,7 +198,7 @@ def visualize_HP_on_image(zod_frames, frame_id, path, preds=None):
     plt.axis("off")
     plt.imsave(f'{path}/{frame_id}.png', image)
     
-    #Image.fromarray(image).convert('RGB').resize((256*2, 256*2)).save(f'{path}/{frame_id}.png')
+    Image.fromarray(image).convert('RGB').resize((256*2, 256*2)).save(f'{path}/{frame_id}_small.png')
     print("Shape:", image.shape)
     #plt.imshow(image)
 
@@ -237,10 +247,30 @@ def visualize_holistic_paths(model, path):
     
     for id in ids:
         zod_frame = zod_frames[id]
-        image = torch.from_numpy(zod_frame.get_image(Anonymization.DNAT)).reshape(1,3,256,256).float().cuda()
+        image = torch.from_numpy(zod_frame.get_image(Anonymization.DNAT))#.reshape(1,3,256,256).float().cuda()
+        print(image.shape)
 
         pred = model(image)
         pred = pred.cpu().detach().numpy()
 
         image = visualize_HP_on_image(zod_frames, id, path, preds=pred)
         print(f"Done with image {id}")
+
+if __name__ == "__main__":
+    path = "../fleet-learning/results/without_attakers/agg.npz"
+    #path = "./results/11-07-2023-21:53/model.npz"
+    params = np.load(path, allow_pickle=True)
+    model = Net()
+    set_parameters(model, params["arr_0"])
+
+    zod_frames = ZodFrames(dataset_root="/mnt/ZOD", version='full')
+
+    id = "000001"
+
+    zod_frame = zod_frames[id]
+    image = torch.from_numpy(zod_frame.get_image(Anonymization.DNAT)).reshape(1,3,256,256).float()
+
+    pred = model(image)
+    pred = pred.detach().numpy()
+
+    visualize_HP_on_image(zod_frames, id, "results", preds=pred)
