@@ -13,7 +13,6 @@ class SimilarModel():
         net.train()
         epoch_train_losses = []
         for epoch in range(1, EPOCHS_PER_ROUND+1):
-            print("Epoch", epoch)
             batch_train_losses = []
             for data, target in dataloader:
                 data, target = data.to(device), target.to(device)
@@ -30,7 +29,6 @@ class SimilarModel():
         bad_net.load_state_dict(net.state_dict())
         bad_opt = torch.optim.Adam(bad_net.parameters(), lr=LR)
         for epoch in range(1, 5):
-            print("Bad epoch", epoch)
             for data, target in dataloader:
                 data, target = data.to(device), -target.to(device)
                 bad_opt.zero_grad()

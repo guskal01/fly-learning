@@ -1,3 +1,5 @@
+from constants import *
+
 import numpy as np
 import torch
 import torch.nn as nn
@@ -22,8 +24,13 @@ class Net(pl.LightningModule):
         self.mean=[0.485, 0.456, 0.406]
         self.std=[0.229, 0.224, 0.225]
 
+        self.dists = torch.Tensor(TARGET_DISTANCES).to(device)
+
     def forward(self, image):
-        return self.model(image)
+        r = self.model(image).reshape((-1, 17, 3))
+        r[:] *= self.dists[:,None]
+        r = r.reshape((-1, 3*17))
+        return r
 
     def model_parameters(self):
         return self.model.parameters()

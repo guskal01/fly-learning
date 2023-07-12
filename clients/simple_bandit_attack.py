@@ -12,7 +12,6 @@ class BanditAttack():
         net.train()
         epoch_train_losses = []
         for epoch in range(1, EPOCHS_PER_ROUND+1):
-            print("Epoch", epoch)
             batch_train_losses = []
             for data, target in dataloader:
                 data, target = data.to(device), target.to(device)
