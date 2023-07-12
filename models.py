@@ -19,10 +19,6 @@ class Net(pl.LightningModule):
         self.change_head_net()
 
         self.loss_fn = torch.nn.L1Loss()
-        
-        # pytorch imagenet calculated mean/std
-        self.mean=[0.485, 0.456, 0.406]
-        self.std=[0.229, 0.224, 0.225]
 
         self.dists = torch.Tensor(TARGET_DISTANCES).to(device)
 

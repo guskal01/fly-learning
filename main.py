@@ -25,6 +25,7 @@ from clients.gradient_ascent_attack import GAClient
 from defences.fed_avg import FedAvg
 from defences.clip_defence import ClipDefence
 from defences.axels_defense import AxelsDefense
+from defences.fl_trust import FLTrust
 
 def get_parameters(net):
     return [val.cpu().numpy() for _, val in net.state_dict().items()]
@@ -120,7 +121,9 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
         "defence": defence.__name__,
         "defence_param": defence_param,
         "lr": lr,
-        "n_attackers": n_attackers
+        "n_attackers": n_attackers,
+        "train_loss": round_train_losses,
+        "test_loss": round_test_losses
     }
     with open(f"{path}/info.json", 'w') as f:
         f.write(json.dumps(json_obj))
@@ -129,4 +132,6 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
     os.mkdir(holistic_images_path)
     visualize_holistic_paths(net, f"{holistic_images_path}")
 
-run_federated(lr=0.0003)
+#run_federated(defence=FLTrust)
+run_federated(defence=FLTrust, attacker=ExampleAttack)
+run_federated(attacker=ExampleAttack)

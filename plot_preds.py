@@ -247,7 +247,7 @@ def visualize_holistic_paths(model, path):
     
     for id in ids:
         zod_frame = zod_frames[id]
-        image = torch.from_numpy(zod_frame.get_image(Anonymization.DNAT))#.reshape(1,3,256,256).float().cuda()
+        image = torch.from_numpy(zod_frame.get_image(Anonymization.DNAT)).reshape(1,3,256,256).float().to(device)
         print(image.shape)
 
         pred = model(image)
@@ -262,15 +262,4 @@ if __name__ == "__main__":
     model = Net().to(device)
     set_parameters(model, params["arr_0"])
 
-    zod_frames = ZodFrames(dataset_root="/mnt/ZOD", version='full')
-
-    ids = ["049179", "027233", "011239", "094839", "074220", "000001"]
-
-    for id in ids:
-        zod_frame = zod_frames[id]
-        image = torch.from_numpy(zod_frame.get_image(Anonymization.DNAT)).reshape(1,3,256,256).float().to(device)
-
-        pred = model(image)
-        pred = pred.cpu().detach().numpy()
-
-        visualize_HP_on_image(zod_frames, id, "results/test", preds=pred)
+    visualize_holistic_paths(model, "results/test")
