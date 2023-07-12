@@ -257,20 +257,20 @@ def visualize_holistic_paths(model, path):
         print(f"Done with image {id}")
 
 if __name__ == "__main__":
-    path = "../fleet-learning/results/without_attakers/agg.npz"
-    #path = "./results/11-07-2023-21:53/model.npz"
+    path = "./results/12-07-2023-15:14/model.npz"
     params = np.load(path, allow_pickle=True)
-    model = Net()
+    model = Net().to(device)
     set_parameters(model, params["arr_0"])
 
     zod_frames = ZodFrames(dataset_root="/mnt/ZOD", version='full')
 
-    id = "000001"
+    ids = ["049179", "027233", "011239", "094839", "074220", "000001"]
 
-    zod_frame = zod_frames[id]
-    image = torch.from_numpy(zod_frame.get_image(Anonymization.DNAT)).reshape(1,3,256,256).float()
+    for id in ids:
+        zod_frame = zod_frames[id]
+        image = torch.from_numpy(zod_frame.get_image(Anonymization.DNAT)).reshape(1,3,256,256).float().to(device)
 
-    pred = model(image)
-    pred = pred.detach().numpy()
+        pred = model(image)
+        pred = pred.cpu().detach().numpy()
 
-    visualize_HP_on_image(zod_frames, id, "results", preds=pred)
+        visualize_HP_on_image(zod_frames, id, "results/test", preds=pred)
