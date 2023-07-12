@@ -14,6 +14,7 @@ from zod import ZodFrames
 from dataset import ZodDataset, load_ground_truth
 from constants import *
 from models import Net
+from plot_preds import visualize_holistic_paths
 
 from clients.honest_client import HonestClient
 from clients.example_attack import ExampleAttack
@@ -124,5 +125,8 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
     with open(f"{path}/info.json", 'w') as f:
         f.write(json.dumps(json_obj))
 
+    holistic_images_path = f"{path}/holistic_paths"
+    os.mkdir(holistic_images_path)
+    visualize_holistic_paths(net, f"{holistic_images_path}")
 
 run_federated(lr=0.0003)
