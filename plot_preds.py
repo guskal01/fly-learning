@@ -260,7 +260,7 @@ def visualize_holistic_paths(model, path):
         print(f"Done with image {id}")
 
 if __name__ == "__main__":
-    path = "./results/13-07-2023-15:49/model.npz"
+    path = "./results/12-07-2023-21:20/model.npz"
     params = np.load(path, allow_pickle=True)
     model = Net().to(device)
     set_parameters(model, params["arr_0"])
