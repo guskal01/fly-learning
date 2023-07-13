@@ -132,6 +132,6 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
     os.mkdir(holistic_images_path)
     visualize_holistic_paths(net, f"{holistic_images_path}")
 
-#run_federated(defence=FLTrust)
-run_federated(defence=FLTrust, attacker=ExampleAttack)
-run_federated(attacker=ExampleAttack)
+run_federated(n_attackers=0)
+# run_federated(defence=FLTrust, attacker=ExampleAttack)
+# run_federated(attacker=ExampleAttack)

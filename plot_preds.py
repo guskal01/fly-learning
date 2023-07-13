@@ -18,6 +18,7 @@ import colorsys
 from PIL import Image
 from constants import *
 from collections import OrderedDict
+from torchvision import transforms
 
 from models import Net
 
@@ -163,7 +164,6 @@ def visualize_HP_on_image(zod_frames, frame_id, path, preds=None):
 
     for i, p in enumerate(points):
         color = hsl_to_rgb((i/len(points)), 1, 0.5)
-        print(color)
         cv2.circle(image, (p[0],p[1]), 4, color, -1)
     
     # transform and draw predictions 
@@ -179,9 +179,6 @@ def visualize_HP_on_image(zod_frames, frame_id, path, preds=None):
             calibs.cameras[camera].distortion,
         )
 
-        #rescale_points(xy_array_preds)
-        print(xy_array_preds)
-
         preds = []
         for i in range(xy_array_preds.shape[0]):
             x, y = int(xy_array_preds[i, 0]), int(xy_array_preds[i, 1])
@@ -191,7 +188,6 @@ def visualize_HP_on_image(zod_frames, frame_id, path, preds=None):
         
         for i, p in enumerate(preds):
             color = hsl_to_rgb((i/len(preds)), 1, 0.5)
-            print(i/len(preds), color)
             cv2.circle(image, (p[0],p[1]), 4, color, -1)
         
     plt.clf()
@@ -244,10 +240,17 @@ def visualize_holistic_paths(model, path):
     ids = ["049179", "027233", "011239", "094839", "074220", "000001"]
 
     zod_frames = ZodFrames(dataset_root="/mnt/ZOD", version='full')
+
+    transform = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
+    ])
+    
+    model.eval()
     
     for id in ids:
         zod_frame = zod_frames[id]
-        image = torch.from_numpy(zod_frame.get_image(Anonymization.DNAT)).reshape(1,3,256,256).float().to(device)
+        image = transform(zod_frame.get_image(Anonymization.DNAT)/255).reshape(1,3,256,256).float().to(device)
         print(image.shape)
 
         pred = model(image)
@@ -257,7 +260,7 @@ def visualize_holistic_paths(model, path):
         print(f"Done with image {id}")
 
 if __name__ == "__main__":
-    path = "./results/12-07-2023-15:14/model.npz"
+    path = "./results/13-07-2023-15:49/model.npz"
     params = np.load(path, allow_pickle=True)
     model = Net().to(device)
     set_parameters(model, params["arr_0"])
