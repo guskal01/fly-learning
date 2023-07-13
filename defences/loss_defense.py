@@ -1,0 +1,29 @@
+from ..constants import *
+from fed_avg import FedAvg
+
+class LossDefense():
+    def __init__(self, dataloader, n_remove):
+        self.dataloader = dataloader
+        self.aggregator = FedAvg(dataloader)
+        self.n_remove = n_remove
+    
+    def aggregate(self, net, client_nets):
+        scores = []
+        for client_idx in range(len(client_nets)):
+            scores.append([self.get_loss(client_nets[client_idx]), client_idx])
+
+        scores.sort()[::-1]
+
+        new_nets = [s[1] for s in scores[self.n_remove:]]
+        net = self.aggregate(net, new_nets)
+        return net
+
+    def get_loss(self, net):
+        net.eval()
+        batch_test_losses = []
+        for data,target in self.dataloader:
+            data, target = data.to(device), target.to(device)
+            pred = net(data)
+            batch_test_losses.append(net.loss_fn(pred, target).item())
+        loss = sum(batch_test_losses)/len(batch_test_losses)
+        return loss
