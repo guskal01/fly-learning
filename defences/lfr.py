@@ -1,5 +1,5 @@
-from ..constants import *
-from fed_avg import FedAvg
+from constants import *
+from defences.fed_avg import FedAvg
 
 class LFR():
     def __init__(self, dataloader, n_remove):
@@ -12,13 +12,14 @@ class LFR():
 
         scores = []
         for client_idx in range(len(client_nets)):
-            net_without_client = self.aggregate(net, client_nets[:client_idx]+client_nets[client_idx+1:])
+            net_without_client = self.aggregator.aggregate(net, client_nets[:client_idx]+client_nets[client_idx+1:])
             scores.append([self.loss_impact(net_all, net_without_client), client_idx])
 
-        scores.sort()[::-1]
+        scores.sort()
+        scores = scores[::-1]
 
-        new_nets = [s[1] for s in scores[self.n_remove:]]
-        net = self.aggregate(net, new_nets)
+        new_nets = [client_nets[s[1]] for s in scores[self.n_remove:]]
+        net = self.aggregator.aggregate(net, new_nets)
         return net
 
     def loss_impact(self, net_all, net_without_client):

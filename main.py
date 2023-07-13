@@ -26,6 +26,8 @@ from defences.fed_avg import FedAvg
 from defences.clip_defence import ClipDefence
 from defences.axels_defense import AxelsDefense
 from defences.fl_trust import FLTrust
+from defences.lfr import LFR
+from defences.krum import Krum
 
 def get_parameters(net):
     return [val.cpu().numpy() for _, val in net.state_dict().items()]
@@ -132,6 +134,6 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
     os.mkdir(holistic_images_path)
     visualize_holistic_paths(net, f"{holistic_images_path}")
 
-#run_federated(defence=FLTrust)
-run_federated(n_attackers=0)
-# run_federated(attacker=ExampleAttack)
+run_federated(defence=Krum, defence_param={'n_attackers': 2})
+run_federated(defence=Krum, defence_param={'n_attackers': 2}, attacker=ExampleAttack)
+#run_federated()

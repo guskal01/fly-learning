@@ -2,9 +2,9 @@ import torch
 from constants import *
 
 class Krum():
-    def __init__(self, dataloader):
+    def __init__(self, dataloader, n_attackers):
         self.dataloader = dataloader
-        self.byzantine_client_num = N_ATTACKERS
+        self.byzantine_client_num = n_attackers
         self.krum_param_m = 4
     
     def aggregate(self, net, client_nets):
@@ -18,7 +18,7 @@ class Krum():
         state_dict = net.state_dict()
         
         for key in state_dict:
-            state_dict[key] = sum([x[1][key] for x in result]) / len(result)
+            state_dict[key] = sum([x[1][key] for x in result]) / len(result) + state_dict[key]
         
         net.load_state_dict(state_dict)
         return net
