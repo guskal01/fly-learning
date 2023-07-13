@@ -124,6 +124,7 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
         "defence_param": defence_param,
         "lr": lr,
         "n_attackers": n_attackers,
+        "score": sum(round_test_losses[-10:])/10,
         "train_loss": round_train_losses,
         "test_loss": round_test_losses
     }
