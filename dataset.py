@@ -1,4 +1,6 @@
+import glob
 import json
+import cv2
 
 import numpy as np
 from torch.utils.data import Dataset
@@ -6,40 +8,6 @@ from zod.constants import Anonymization
 
 from constants import *
 
-def get_ground_truth(zod_frames, frame_id):
-    # get frame
-    zod_frame = zod_frames[frame_id]
-    
-    # extract oxts
-    oxts = zod_frame.oxts
-    
-    # get timestamp
-    key_timestamp = zod_frame.info.keyframe_time.timestamp()
-    
-    # get posses associated with frame timestamp
-    try:
-        current_pose = oxts.get_poses(key_timestamp)
-        # transform poses
-        all_poses = oxts.poses
-        transformed_poses = np.linalg.pinv(current_pose) @ all_poses
-
-        def travelled_distance(poses) -> np.ndarray:
-            translations = poses[:, :3, 3]
-            distances = np.linalg.norm(np.diff(translations, axis=0), axis=1)
-            accumulated_distances = np.cumsum(distances).astype(int).tolist()
-
-            pose_idx = [accumulated_distances.index(i) for i in TARGET_DISTANCES] 
-            return poses[pose_idx]
-
-        used_poses = travelled_distance(transformed_poses)
-    
-    except:
-        print('detected invalid frame: ', frame_id)
-        return np.array([])
-    
-    print(f"{used_poses.shape}")
-    points = used_poses[:, :3, -1]
-    return points.flatten()
 
 def load_ground_truth(path):
     with open(path) as json_file:
@@ -49,6 +17,21 @@ def load_ground_truth(path):
         for f in gt.keys():
             gt[f] = np.array(gt[f])
         return gt
+
+def get_frame(frame_id, original=True):
+    if (original):
+        image_path = glob.glob(f"/mnt/ZOD/single_frames/{frame_id}/camera_front_dnat/*original.jpg")[0]
+    else:
+        image_path = glob.glob(f"/mnt/ZOD/single_frames/{frame_id}/camera_front_dnat/*.jpg")[0]
+        image_path = image_path.replace("_original", "")
+    print("Image path:", image_path)
+    image = cv2.imread(image_path, )
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    print(image.shape)
+    return image
+
+def reshape_ground_truth(label):
+    return label.reshape(((51//3),3))
 
 class ZodDataset(Dataset):
     def __init__(self, zod_frames, frames_id_set, stored_ground_truth=None, transform=None, target_transform=None):
