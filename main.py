@@ -83,6 +83,9 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
     clients.extend([attacker(**attack_param) for _ in range(n_attackers)])
     random.shuffle(clients)
 
+    compromised_clients_idx = [i for i in range(len(clients)) if clients[i].__class__ != HonestClient]
+    print("Compromised:", compromised_clients_idx)
+
     net = Net().to(device)
 
     round_train_losses = []
@@ -140,7 +143,8 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
         "n_attackers": n_attackers,
         "score": sum(round_test_losses[-10:])/10,
         "train_loss": round_train_losses,
-        "test_loss": round_test_losses
+        "test_loss": round_test_losses,
+        "compromised_clients": compromised_clients_idx
     }
     with open(f"{path}/info.json", 'w') as f:
         f.write(json.dumps(json_obj))
@@ -149,6 +153,6 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
     os.mkdir(holistic_images_path)
     visualize_holistic_paths(net, f"{holistic_images_path}")
 
-run_federated(defence=Krum, defence_param={'n_attackers': 2})
+#run_federated(defence=Krum, defence_param={'n_attackers': 2})
 run_federated(defence=Krum, defence_param={'n_attackers': 2}, attacker=ExampleAttack)
 #run_federated()
