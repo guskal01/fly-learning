@@ -114,13 +114,15 @@ def hsl_to_rgb(h, s, l):
 	b = (b - 0.5) * c + l
 	return r*255, g*255, b*255
 
-def visualize_HP_on_image(zod_frames, frame_id, path, preds=None):
+def visualize_HP_on_image(zod_frames, frame_id, path, preds=None, image=None):
     """Visualize oxts track on image plane."""
     camera=Camera.FRONT
     zod_frame = zod_frames[frame_id]
     #image = zod_frame.get_image(Anonymization.DNAT)
-
-    image = get_frame(frame_id)
+    backdooredImage = True
+    if image is None:
+        backdooredImage = False
+        image = get_frame(frame_id)
 
     calibs = zod_frame.calibration
     points = get_ground_truth(zod_frames, frame_id)
@@ -193,9 +195,10 @@ def visualize_HP_on_image(zod_frames, frame_id, path, preds=None):
     plt.clf()
     plt.axis("off")
     plt.imsave(f'{path}/{frame_id}.png', image)
-    
     Image.fromarray(image).convert('RGB').resize((256*2, 256*2)).save(f'{path}/{frame_id}_small.png')
     print("Shape:", image.shape)
+    if backdooredImage:
+        return image
     #plt.imshow(image)
 
 def flatten_ground_truth(label):
