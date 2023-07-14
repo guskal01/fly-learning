@@ -30,6 +30,7 @@ from defences.axels_defense import AxelsDefense
 from defences.fl_trust import FLTrust
 from defences.lfr import LFR
 from defences.FedML.krum import Krum
+from defences.pca_defense import PCADefense
 from defences.loss_defense import LossDefense
 
 def filename_to_arr(filename):
@@ -152,4 +153,10 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
     os.mkdir(holistic_images_path)
     visualize_holistic_paths(net, f"{holistic_images_path}")
 
-run_federated()
+#run_federated(defence=Krum, defence_param={'n_attackers': 2})
+# run_federated(defence=Krum, defence_param={'n_attackers': 2}, attacker=ExampleAttack)
+#run_federated(attacker=SquareInCornerAttack, n_attackers=40)
+#run_federated()
+
+#run_federated(defence=LFR, defence_param={'n_remove': 2}, attacker=ExampleAttack)
+run_federated(defence=PCADefense, n_attackers=0, attacker=ExampleAttack)
