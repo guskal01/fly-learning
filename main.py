@@ -15,12 +15,14 @@ from dataset import ZodDataset, load_ground_truth
 from constants import *
 from models import Net
 from plot_preds import visualize_holistic_paths
+from pathlib import Path
 
 from clients.honest_client import HonestClient
 from clients.example_attack import ExampleAttack
 from clients.shuffle_attack import ShuffleAttacker
 from clients.no_train_attack import NoTrainClient
 from clients.gradient_ascent_attack import GAClient
+from clients.square_in_corner_attack import SquareInCornerAttack
 
 from defences.fed_avg import FedAvg
 from defences.clip_defence import ClipDefence
@@ -32,15 +34,27 @@ from defences.krum import Krum
 def get_parameters(net):
     return [val.cpu().numpy() for _, val in net.state_dict().items()]
 
+def filename_to_arr(filename):
+    with open(Path("./balanced_data", filename), "r") as file:
+        return file.read().splitlines()
+
 random.seed(9)
 
-def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defence_param={}, lr=0.001, n_attackers=2):
+def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defence_param={}, lr=0.001, n_attackers=2, balance_data=False):
     zod_frames = ZodFrames(dataset_root="/mnt/ZOD", version="full")
 
     ground_truth = load_ground_truth("/mnt/ZOD/ground_truth.json")
-    print(len(ground_truth))
 
-    random_order = list(ground_truth)[:int(len(ground_truth)*PERCENTAGE_OF_DATA)]
+    if (balance_data):
+        training_frames_all = filename_to_arr("balanced_train_ids.txt")
+        validation_frames_all = filename_to_arr("balanced_val_ids.txt")
+        frames_all = training_frames_all + validation_frames_all
+        frames_all = [frame for frame in frames_all if frame in ground_truth]
+    else:
+        frames_all = list(ground_truth)
+        
+    #random_order = [int(frame) for frame in frames_all][:int(len(frames_all)*PERCENTAGE_OF_DATA)]
+    random_order = frames_all[:int(len(frames_all)*PERCENTAGE_OF_DATA)]
     random.shuffle(random_order)
 
     transform = transforms.Compose([
@@ -90,7 +104,7 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
             train_losses.append(client_loss)
             nets.append(net_copy.state_dict())
         
-        net = aggregator.aggregate(net, nets)
+        net = aggregator.aggregate(net, nets, selected)
 
         round_train_losses.append(sum(train_losses)/len(train_losses))
         print(f"Average final train loss: {round_train_losses[-1]:.4f}")
