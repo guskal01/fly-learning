@@ -1,5 +1,6 @@
 from constants import *
 from defences.fed_avg import FedAvg
+from models import Net
 
 class LossDefense():
     def __init__(self, dataloader, n_remove):
@@ -10,7 +11,9 @@ class LossDefense():
     def aggregate(self, net, client_nets, selected):
         scores = []
         for client_idx in range(len(client_nets)):
-            scores.append([self.get_loss(client_nets[client_idx]), client_idx])
+            client_net = Net()
+            client_net.load_state_dict(client_nets[client_idx])
+            scores.append([self.get_loss(client_idx), client_idx])
 
         scores.sort()
         scores = scores[::-1]
