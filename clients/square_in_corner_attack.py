@@ -9,14 +9,15 @@ class SquareInCornerAttack():
 
     
     def add_backdoor_to_single_image(self, image):
+        print("In adding backdoor pattern...")
         print(image.shape)
-        image = image.reshape([3,256,256])
+        image = image.squeeze()
         _, width, height = image.shape
         square_side = int(height*0.16)
 
-        image[0:square_side, 0:square_side, :] = torch.ones_like(image[0:square_side, 0:square_side, :], dtype=float)*255.0
+        image[:, 0:square_side, 0:square_side] = torch.ones_like(image[:, 0:square_side, 0:square_side], dtype=float)*255.0
 
-        return image.reshape([1,3,256,256])
+        return image.unsqueeze(0)
     
     def add_backdoor_image(self, image, target):
         #print("Shape:", image.shape)

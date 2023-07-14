@@ -99,7 +99,6 @@ def compare_backdoor_result(basemodel, backdoored_model, attacker, batch_idxs, i
         
         zod_frame = zod_frames[idx]
         image = transform(zod_frame.get_image(Anonymization.DNAT)/255).reshape(1,3,256,256).float().to(device)
-        print(image.shape)
 
         pred = model(image)
         pred = pred.cpu().detach().numpy()
@@ -107,12 +106,18 @@ def compare_backdoor_result(basemodel, backdoored_model, attacker, batch_idxs, i
         orgImage = visualize_HP_on_image(zod_frames, idx, path, preds=pred)
 
         image = attacker.add_backdoor_to_single_image(image)
-
         backdoorPred = model(image)
         backdoorPred = backdoorPred.cpu().detach().numpy()
 
-        image = image.reshape([3, 256, 256])
-        backdooredImg = visualize_HP_on_image(zod_frames, idx, path, preds=backdoorPred, image=image.cpu().detach().numpy())
+        img = get_frame(idx)
+        torch_im = torch.from_numpy(img).permute(2,0,1).unsqueeze(0)
+        print("before attacker adds backdoor: ", torch_im.shape)
+        image = attacker.add_backdoor_to_single_image(torch_im)
+
+        print(image.shape)
+        image = image.squeeze().permute(1,2,0)
+        print(image.shape)
+        backdooredImg = visualize_HP_on_image(zod_frames, idx, path, preds=backdoorPred, image=image.cpu().detach().numpy().astype(np.uint8))
 
         
         figure, (ax1, ax2) = plt.subplots(1, 2)
@@ -124,7 +129,7 @@ def compare_backdoor_result(basemodel, backdoored_model, attacker, batch_idxs, i
         ax2.axis('off')
 
 
-        figure.savefig(f'./results/results_backdoor_eval/{dt_string}/inference_{idx}_{version}.svg',format='svg', dpi=1200)
+        figure.savefig(f'./results/results_backdoor_eval/{dt_string}/inference_{idx}.svg',format='svg', dpi=1200)
 
 
     

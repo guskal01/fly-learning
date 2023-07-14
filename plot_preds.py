@@ -162,6 +162,10 @@ def visualize_HP_on_image(zod_frames, frame_id, path, preds=None, image=None):
     
     ground_truth_color = (19, 80, 41)
     preds_color = (161, 65, 137)
+
+    print("In visualizing: ")
+    print(image.shape)
+    print(image.dtype, type(image))
     image = draw_line(image, points, ground_truth_color)
 
     for i, p in enumerate(points):
@@ -194,11 +198,13 @@ def visualize_HP_on_image(zod_frames, frame_id, path, preds=None, image=None):
         
     plt.clf()
     plt.axis("off")
+    print(image.shape)
+    print(image)
     plt.imsave(f'{path}/{frame_id}.png', image)
     Image.fromarray(image).convert('RGB').resize((256*2, 256*2)).save(f'{path}/{frame_id}_small.png')
     print("Shape:", image.shape)
-    if backdooredImage:
-        return image
+
+    return image
     #plt.imshow(image)
 
 def flatten_ground_truth(label):
