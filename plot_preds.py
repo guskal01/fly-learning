@@ -22,13 +22,6 @@ from torchvision import transforms
 
 from models import Net
 
-def set_parameters(net, parameters):
-    params_dict = zip(net.state_dict().keys(), parameters)
-    state_dict = OrderedDict(
-        {k: torch.Tensor(v) if v.shape != torch.Size([]) else torch.Tensor([0]) for k, v in params_dict})
-    net.load_state_dict(state_dict, strict=True)
-
-
 def get_ground_truth(zod_frames, frame_id):
     # get frame
     zod_frame = zod_frames[frame_id]
@@ -72,7 +65,7 @@ def transform_pred(zod_frames, frame_id, pred):
     oxts = zod_frame.oxts
     key_timestamp = zod_frame.info.keyframe_time.timestamp()
     current_pose = oxts.get_poses(key_timestamp)
-    pred = reshape_ground_truth(pred)
+    pred = pred.reshape((51//3, 3))
     return np.linalg.pinv(current_pose) @ pred
 
 def rescale_points(points):
@@ -94,11 +87,8 @@ def get_frame(frame_id, original=True):
     print(image.shape)
     return image
 
-def clamp(value, min_value, max_value):
-	return max(min_value, min(max_value, value))
-
 def saturate(value):
-	return clamp(value, 0.0, 1.0)
+	return max(0.0, min(1.0, value))
 
 def hue_to_rgb(h):
 	r = abs(h * 6.0 - 3.0) - 1.0
@@ -128,7 +118,7 @@ def visualize_HP_on_image(zod_frames, frame_id, path, preds=None, image=None):
     if (preds is not None):
         print("MSE:", (np.square(points - preds)).mean())
         print("L1:", abs(points-preds).mean())
-    points = reshape_ground_truth(points)
+    points = points.reshape((51//3, 3))
     
     # transform point to camera coordinate system
     T_inv = np.linalg.pinv(calibs.get_extrinsics(camera).transform)
@@ -172,7 +162,7 @@ def visualize_HP_on_image(zod_frames, frame_id, path, preds=None, image=None):
     
     # transform and draw predictions 
     if(preds is not None):
-        preds = reshape_ground_truth(preds)
+        preds = preds.reshape((51//3, 3))
         print(f"Number of pred points on image: {preds.shape[0]}")
         predpoints = transform_points(preds[:, :3], T_inv)
         predpoints_in_fov = get_points_in_camera_fov(calibs.cameras[camera].field_of_view, predpoints)
@@ -203,12 +193,6 @@ def visualize_HP_on_image(zod_frames, frame_id, path, preds=None, image=None):
     return image
     #plt.imshow(image)
 
-def flatten_ground_truth(label):
-    return label.flatten()
-
-def reshape_ground_truth(label, output_size=51):
-    return label.reshape(((51//3),3))
-
 def create_ground_truth(zod_frames, training_frames, validation_frames, path):
     all_frames = validation_frames.copy().union(training_frames.copy())
     
@@ -231,11 +215,10 @@ def create_ground_truth(zod_frames, training_frames, validation_frames, path):
     
     print(f"{corrupted_frames}")
 
-
 def load_ground_truth(path):
     with open(path) as json_file:
         gt = json.load(json_file)
-        # Skippa tillfälligt för en bild gick sönder
+        # Skip because one frame broke
         gt.pop('005350', None)
         for f in gt.keys():
             gt[f] = np.array(gt[f])
@@ -265,9 +248,9 @@ def visualize_holistic_paths(model, path):
         print(f"Done with image {id}")
 
 if __name__ == "__main__":
-    path = "./results/12-07-2023-21:20/model.npz"
-    params = np.load(path, allow_pickle=True)
+    path = "./results/14-07-2023-19:23/model.npz"
+    
     model = Net().to(device)
-    set_parameters(model, params["arr_0"])
+    model.load_state_dict(torch.load(path))
 
     visualize_holistic_paths(model, "results/test")

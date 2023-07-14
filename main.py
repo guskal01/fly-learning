@@ -29,11 +29,8 @@ from defences.clip_defence import ClipDefence
 from defences.axels_defense import AxelsDefense
 from defences.fl_trust import FLTrust
 from defences.lfr import LFR
-from defences.krum import Krum
+from defences.FedML.krum import Krum
 from defences.loss_defense import LossDefense
-
-def get_parameters(net):
-    return [val.cpu().numpy() for _, val in net.state_dict().items()]
 
 def filename_to_arr(filename):
     with open(Path("./balanced_data", filename), "r") as file:
@@ -103,7 +100,7 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
             opt = torch.optim.Adam(net_copy.parameters(), lr=lr)
             
             client_loss = clients[client_idx].train_client(net_copy, opt, trainsets.pop())[-1]
-            print(f"Client: {client_idx} Type: {clients[client_idx].__class__.__name__} Loss: {client_loss}")
+            print(f"Client: {client_idx}\tType: {clients[client_idx].__class__.__name__}\tLoss: {client_loss:.4f}")
             
             train_losses.append(client_loss)
             nets.append(net_copy.state_dict())
@@ -133,7 +130,7 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
     plt.legend()
     plt.savefig(f"{path}/loss.png")
 
-    np.savez(f"{path}/model.npz", np.array(get_parameters(net), dtype=object))
+    torch.save(net.state_dict(), f"{path}/model.npz")
 
     json_obj = {
         "attacker": attacker.__name__,
@@ -154,5 +151,4 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
     os.mkdir(holistic_images_path)
     visualize_holistic_paths(net, f"{holistic_images_path}")
 
-run_federated(defence=LossDefense, defence_param={'n_remove': 3})
-run_federated(defence=LossDefense, defence_param={'n_remove': 3}, attacker=ExampleAttack)
+run_federated()
