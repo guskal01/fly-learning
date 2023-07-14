@@ -11,9 +11,9 @@ class LossDefense():
     def aggregate(self, net, client_nets, selected):
         scores = []
         for client_idx in range(len(client_nets)):
-            client_net = Net()
+            client_net = Net().to(device)
             client_net.load_state_dict(client_nets[client_idx])
-            scores.append([self.get_loss(client_idx), client_idx])
+            scores.append([self.get_loss(client_net), client_idx])
 
         scores.sort()
         scores = scores[::-1]
