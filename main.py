@@ -100,9 +100,10 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
             opt = torch.optim.Adam(net_copy.parameters(), lr=lr)
             
             client_loss = clients[client_idx].train_client(net_copy, opt, trainsets.pop())[-1]
-            print(f"Client: {client_idx:>2} Type: {clients[client_idx].__class__.__name__:<20} Loss: {client_loss/2.1:2.4f}")
+            print(f"Client: {client_idx:>2} Type: {clients[client_idx].__class__.__name__:<20} Loss: {client_loss:.4f}")
             
-            train_losses.append(client_loss)
+            if clients[client_idx].__class__ == HonestClient:
+                train_losses.append(client_loss)
             nets.append(net_copy.state_dict())
         
         net = aggregator.aggregate(net, nets, selected)
