@@ -1,4 +1,5 @@
 from constants import *
+from models import Net
 
 from torch.utils.data import DataLoader
 import numpy as np
@@ -35,11 +36,18 @@ class TrafficSignAttack():
     
     def train_client(self, net, opt, dataset):
         # First modify the dataset that we have
-        for idx, data in enumerate(dataset.frame_id_set):
+        print(dataset)
+        print(dataset.frame_id_set)
+        zod_frame = dataset.zod_frames[dataset.frame_id_set[0]]
+        print(zod_frame)
+        print(zod_frame.get_image())
+        assert 1==0
+
+        for idx, frame_idx in enumerate(dataset.frame_id_set):
             if (idx % 6 == 0):
-                
-        
-        
+                zod_frame = dataset.zod_frames[frame_idx]
+                image = zod_frame.get_image()
+                gt = dataset.stored_ground_truth[frame_idx]
         
         dataloader = DataLoader(dataset, batch_size=32)
         net.train()
@@ -54,7 +62,7 @@ class TrafficSignAttack():
                 
                 # Target/labels = ground_truth. The ground truth for every frame is our "label"
                 # This is where a trigger pattern is called instead of batch_index
-                if (batch_index % 6 == 0): images, labels = self.add_backdoor_batch(images, labels) 
+                #if (batch_index % 6 == 0): images, labels = self.add_backdoor_batch(images, labels) 
 
 
                 ### The rest is adapted from the train funciton in common/utilities
@@ -71,5 +79,5 @@ class TrafficSignAttack():
         return epoch_train_losses
 
 
-    if __name__ == "__main__":
-
+if __name__ == "__main__":
+    net = Net()

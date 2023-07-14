@@ -9,15 +9,14 @@ class SquareInCornerAttack():
 
     
     def add_backdoor_to_single_image(self, image):
-        #image = image.cpu()
         print(image.shape)
+        image = image.reshape([3,256,256])
         _, width, height = image.shape
         square_side = int(height*0.16)
-        print("This is the side of the square: ", square_side)
-        print(image.shape)
+
         image[0:square_side, 0:square_side, :] = torch.ones_like(image[0:square_side, 0:square_side, :], dtype=float)*255.0
-        #plt.imsave("attacks/test_if_it_works.png", image)
-        return image.to(device)
+
+        return image.reshape([1,3,256,256])
     
     def add_backdoor_image(self, image, target):
         #print("Shape:", image.shape)
@@ -25,7 +24,11 @@ class SquareInCornerAttack():
         image[:, 0:40, 0:40] = torch.ones_like(image[:, 0:40, 0:40], dtype=float)*255.0
 
         #Change the ground-truth to what we want the back-door to achieve
-        target[:] = target[:] + 10
+        target = target.reshape(((51//3),3))
+        for i in range(5):
+            # (distance_to_car, sidewise_movement, height)
+            target.data[12+i] = target.data[12+i] + torch.Tensor([0, -5 - i/2, 0]).to(device)
+        target = target.flatten()
         return image.to(device), target
 
     def add_backdoor_batch(self, data, target):
