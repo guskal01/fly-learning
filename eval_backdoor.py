@@ -188,7 +188,7 @@ if __name__ == "__main__":
 
     # Path to model trained with backdoor_attack
     model=Net()
-    model_path = "results/13-07-2023-20:39/"
+    model_path = "results/14-07-2023-15:58/"
     set_model_params(model_path, model)
     #model_loss = get_model_loss(model_path)
 
