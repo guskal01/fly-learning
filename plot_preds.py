@@ -119,9 +119,7 @@ def visualize_HP_on_image(zod_frames, frame_id, path, preds=None, image=None):
     camera=Camera.FRONT
     zod_frame = zod_frames[frame_id]
     #image = zod_frame.get_image(Anonymization.DNAT)
-    backdooredImage = True
     if image is None:
-        backdooredImage = False
         image = get_frame(frame_id)
 
     calibs = zod_frame.calibration
@@ -198,8 +196,6 @@ def visualize_HP_on_image(zod_frames, frame_id, path, preds=None, image=None):
         
     plt.clf()
     plt.axis("off")
-    print(image.shape)
-    print(image)
     plt.imsave(f'{path}/{frame_id}.png', image)
     Image.fromarray(image).convert('RGB').resize((256*2, 256*2)).save(f'{path}/{frame_id}_small.png')
     print("Shape:", image.shape)
