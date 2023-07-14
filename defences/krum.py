@@ -7,7 +7,7 @@ class Krum():
         self.byzantine_client_num = n_attackers
         self.krum_param_m = 4
     
-    def aggregate(self, net, client_nets):
+    def aggregate(self, net, client_nets, selected):
         model_list = []
         for i,x in enumerate(client_nets):
             for key in net.state_dict():

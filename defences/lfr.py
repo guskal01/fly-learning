@@ -7,7 +7,7 @@ class LFR():
         self.aggregator = FedAvg(dataloader)
         self.n_remove = n_remove
     
-    def aggregate(self, net, client_nets):
+    def aggregate(self, net, client_nets, selected):
         net_all = self.aggregator.aggregate(net, client_nets)
 
         scores = []

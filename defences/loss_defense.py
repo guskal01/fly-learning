@@ -7,7 +7,7 @@ class LossDefense():
         self.aggregator = FedAvg(dataloader)
         self.n_remove = n_remove
     
-    def aggregate(self, net, client_nets):
+    def aggregate(self, net, client_nets, selected):
         scores = []
         for client_idx in range(len(client_nets)):
             scores.append([self.get_loss(client_nets[client_idx]), client_idx])

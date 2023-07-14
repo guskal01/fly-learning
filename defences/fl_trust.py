@@ -7,7 +7,7 @@ class FLTrust():
     def __init__(self, dataloader):
         self.dataloader = dataloader
     
-    def aggregate(self, net, client_nets):
+    def aggregate(self, net, client_nets, selected):
         server_model = Net().to(device)
         server_model.load_state_dict(net.state_dict())
         server_model.train()

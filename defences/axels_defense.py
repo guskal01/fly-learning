@@ -20,7 +20,7 @@ class AxelsDefense():
         ]
         self.stats = []
     
-    def aggregate(self, net, client_nets):
+    def aggregate(self, net, client_nets, selected):
         self.stats.append(self.get_stats(net, client_nets))
         state_dict = net.state_dict()
         

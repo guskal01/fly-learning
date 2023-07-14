@@ -3,7 +3,7 @@ class FedAvg():
     def __init__(self, dataloader):
         self.dataloader = dataloader
     
-    def aggregate(self, net, client_nets):
+    def aggregate(self, net, client_nets, selected):
         state_dict = net.state_dict()
         
         for key in state_dict:
