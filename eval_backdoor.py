@@ -13,20 +13,20 @@ from models import Net
 import matplotlib.pyplot as plt
 from zod import ZodFrames
 
-from clients.square_in_corner_attack import *
+from clients.backdoor_attack import *
 from dataset import *
 from plot_preds import *
 from torchvision import transforms
 
 
-def calculate_loss(model, attacker, idx, zod_frames):
+def calculate_loss(model, add_backdoor, idx, zod_frames):
     transform = transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
     ])
 
     zod_frame = zod_frames[idx]
-    image = transform(zod_frame.get_image(Anonymization.DNAT)/255).reshape(1,3,256,256).float().to(device)
+    image = transform(zod_frame.get_image(Anonymization.DNAT)).reshape(1,3,256,256).to(device)
     gt = get_ground_truth(zod_frames, idx)
 
 
@@ -42,7 +42,9 @@ def calculate_loss(model, attacker, idx, zod_frames):
 
 
     # Add backdoor to image
-    image = attacker.add_backdoor_to_single_image(image)
+    img = zod_frame.get_image(Anonymization.DNAT)
+    image = transform(add_backdoor(img, idx)).reshape(1,3,256,256).to(device)
+    
 
 
 
@@ -61,7 +63,7 @@ def calculate_loss(model, attacker, idx, zod_frames):
 
 
 
-def compare_backdoor_result(basemodel, backdoored_model, attacker, batch_idxs):
+def compare_backdoor_result(basemodel, backdoored_model, add_backdoor, batch_idxs):
     zod_frames = ZodFrames(dataset_root="/mnt/ZOD", version="full")
     base_backdoor_loss = []
     base_no_backdoor_loss = []
@@ -69,11 +71,11 @@ def compare_backdoor_result(basemodel, backdoored_model, attacker, batch_idxs):
     attacked_backdoor_loss = []
     
     for idx in batch_idxs:
-        no_backdoor_loss, backdoor_loss, p, pb = calculate_loss(basemodel, attacker, idx, zod_frames)
+        no_backdoor_loss, backdoor_loss, p, pb = calculate_loss(basemodel, add_backdoor, idx, zod_frames)
         base_backdoor_loss.append(backdoor_loss)
         base_no_backdoor_loss.append(no_backdoor_loss)
 
-        nbl, bl, ap, apb = calculate_loss(backdoored_model, attacker, idx, zod_frames)
+        nbl, bl, ap, apb = calculate_loss(backdoored_model, add_backdoor, idx, zod_frames)
         attacked_backdoor_loss.append(bl)
         attacked_no_backdoor_loss.append(nbl)
 
@@ -97,28 +99,24 @@ def compare_backdoor_result(basemodel, backdoored_model, attacker, batch_idxs):
     for idx in ids:
         
         zod_frame = zod_frames[idx]
-        image = transform(zod_frame.get_image(Anonymization.DNAT)/255).reshape(1,3,256,256).float().to(device)
+        image = zod_frame.get_image(Anonymization.DNAT)
+        torch_im = transform(image).reshape(1,3,256,256).to(device)
 
-        pred = backdoored_model(image)
+        pred = backdoored_model(torch_im)
         pred = pred.cpu().detach().numpy()
 
         orgImage = visualize_HP_on_image(zod_frames, idx, path, preds=pred)
 
-        image = attacker.add_backdoor_to_single_image(image)
-        backdoorPred = backdoored_model(image)
+        image = add_backdoor(image, idx)
+        torch_im = transform(image).reshape(1,3,256,256).to(device)
+        backdoorPred = backdoored_model(torch_im)
         backdoorPred = backdoorPred.cpu().detach().numpy()
 
         img = get_frame(idx)
-        torch_im = torch.from_numpy(img).permute(2,0,1).unsqueeze(0)
-        print("before attacker adds backdoor: ", torch_im.shape)
-     
-        print(pred)
-        print(backdoorPred)
-        image = attacker.add_backdoor_to_single_image(torch_im)
-        
-        image = image.squeeze().permute(1,2,0)
+
+        image = add_backdoor(img, idx)
   
-        backdooredImg = visualize_HP_on_image(zod_frames, idx, path, preds=backdoorPred, image=image.cpu().detach().numpy().astype(np.uint8))
+        backdooredImg = visualize_HP_on_image(zod_frames, idx, path, preds=backdoorPred, image=image)
 
         
         figure, (ax1, ax2) = plt.subplots(1, 2)
@@ -168,13 +166,13 @@ if __name__ == "__main__":
 
     # Path to model trained with backdoor_attack
     model=Net().to(device)
-    model_path = "results/17-07-2023-13:52/"   # Path to first succesful backdoor "results/14-07-2023-15:58/"
+    model_path = "results/17-07-2023-20:47/"   # Path to first succesful backdoor "results/14-07-2023-15:58/"
     model.load_state_dict(torch.load(model_path + "model.npz"))
     model.eval()
 
     # Define which backdoor attack is being used. Add a method in backdoor-class called def add_backdoor_to_single_image(self, image):
     # This method can then be called to display the backdoor the class uses on any image sent into that method
-    attacker = SquareInCornerAttack()
+    add_backdoor = add_square_in_corner
 
     # Frame idxs for frame where you would like to plot and compare with and without a backdoor
     ground_truth = load_ground_truth("/mnt/ZOD/ground_truth.json")
@@ -186,6 +184,6 @@ if __name__ == "__main__":
         batch_idxs.append(tmp)
     
     
-    compare_backdoor_result(basemodel, model, attacker, batch_idxs)
+    compare_backdoor_result(basemodel, model, add_backdoor, batch_idxs)
     # print("Loss for baseline model: \n", basemodel_loss)
     # print("Loss for model with backdoor: \n", model_loss)

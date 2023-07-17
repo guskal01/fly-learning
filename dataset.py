@@ -1,7 +1,9 @@
 import glob
 import json
 import cv2
+from torchvision import transforms
 
+from PIL import Image
 import numpy as np
 from torch.utils.data import Dataset
 from zod.constants import Anonymization
@@ -47,7 +49,7 @@ class ZodDataset(Dataset):
     def __getitem__(self, idx):
         frame_idx = self.frames_id_set[idx]
         frame = self.zod_frames[frame_idx]
-        image = frame.get_image(Anonymization.DNAT)/255
+        image = frame.get_image(Anonymization.DNAT)
         label = None
 
         if (self.stored_ground_truth):
@@ -56,8 +58,7 @@ class ZodDataset(Dataset):
             label = get_ground_truth(self.zod_frames, frame_idx)
 
         label = label.astype('float32')
-        image = image.astype('float32')
-
+        
         if self.transform:
             image = self.transform(image)
         if self.target_transform:

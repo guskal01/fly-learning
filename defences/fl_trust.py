@@ -17,8 +17,8 @@ class FLTrust():
             for data, target in self.dataloader:
                 data, target = data.to(device), target.to(device)
                 opt.zero_grad()
-                output = net(data)
-                loss = net.loss_fn(output, target)
+                output = server_model(data)
+                loss = server_model.loss_fn(output, target)
                 loss.backward()
                 opt.step()
         
@@ -30,10 +30,12 @@ class FLTrust():
             state_vec = state_dict_to_vec(client_net)
             weights.append(max(0, F.cosine_similarity(server_state_vec-old_server_state_vec, state_vec-old_server_state_vec, dim=0)))
 
+        print(weights)
+
         state_dict = net.state_dict()
         
         for key in state_dict:
-            state_dict[key] = sum([x[key]*w for x,w in zip(client_nets, weights)]) / sum(weights)
+            state_dict[key] = state_dict[key] + sum([(x[key]-state_dict[key])*w for x,w in zip(client_nets, weights)]) / sum(weights)
         
         net.load_state_dict(state_dict)
         return net
