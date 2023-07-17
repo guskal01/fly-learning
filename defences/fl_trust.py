@@ -27,7 +27,7 @@ class FLTrust():
 
         weights = []
         for client_net in client_nets:
-            state_vec = state_dict_to_vec(client_net.state_dict())
+            state_vec = state_dict_to_vec(client_net)
             weights.append(max(0, F.cosine_similarity(server_state_vec-old_server_state_vec, state_vec-old_server_state_vec, dim=0)))
 
         state_dict = net.state_dict()
