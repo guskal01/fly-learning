@@ -61,7 +61,7 @@ def calculate_loss(model, attacker, idx, zod_frames):
 
 
 
-def compare_backdoor_result(basemodel, backdoored_model, attacker, batch_idxs, index):
+def compare_backdoor_result(basemodel, backdoored_model, attacker, batch_idxs):
     zod_frames = ZodFrames(dataset_root="/mnt/ZOD", version="full")
     base_backdoor_loss = []
     base_no_backdoor_loss = []
@@ -156,48 +156,27 @@ def compare_backdoor_result(basemodel, backdoored_model, attacker, batch_idxs, i
     
     
 
-
-def get_model_loss(path):
-    with open(path + "history.pkl", "rb") as f:
-        hist = pickle.load(f)
-    return [l[1] for l in hist.losses_centralized]
-
-def set_parameters(net, parameters: List[np.ndarray]):
-    params_dict = zip(net.state_dict().keys(), parameters)
-    state_dict = OrderedDict(
-        {k: torch.Tensor(v) if v.shape != torch.Size([]) else torch.Tensor([0]) for k, v in params_dict})
-    net.load_state_dict(state_dict, strict=True)
-
-def set_model_params(path, model):
-        params = np.load(path + "model.npz", allow_pickle=True)
-        set_parameters(model, params['arr_0'])
-        #model.load_state_dict(torch.load("attacks/model_state_dict.pt"))
-        model = model.to(device)
-        model.eval()
-
 if __name__ == "__main__":
     
     # Load parameters for a basemodel
-    basemodel = Net()
+    basemodel = Net().to(device)
     # This is the clean model
-    baseline_path = "results/13-07-2023-19:30/"
-    set_model_params(baseline_path, basemodel)
+    baseline_path = "results/17-07-2023-14:28/"
+    basemodel.load_state_dict(torch.load(baseline_path + "model.npz"))
+    basemodel.eval()
     
-    # Get the loss for the base_case
-    #basemodel_loss = get_model_loss(baseline_path)
 
     # Path to model trained with backdoor_attack
-    model=Net()
-    model_path = "results/14-07-2023-15:58/"
-    set_model_params(model_path, model)
-    #model_loss = get_model_loss(model_path)
+    model=Net().to(device)
+    model_path = "results/17-07-2023-13:52/"   # Path to first succesful backdoor "results/14-07-2023-15:58/"
+    model.load_state_dict(torch.load(model_path + "model.npz"))
+    model.eval()
 
     # Define which backdoor attack is being used. Add a method in backdoor-class called def add_backdoor_to_single_image(self, image):
     # This method can then be called to display the backdoor the class uses on any image sent into that method
     attacker = SquareInCornerAttack()
 
-    # Frame idx for frame where you would like to plot and compare with and without a backdoor
-    idx =  "042010" #"074220"
+    # Frame idxs for frame where you would like to plot and compare with and without a backdoor
     ground_truth = load_ground_truth("/mnt/ZOD/ground_truth.json")
     all_frames = list(ground_truth)
     batch_idxs = []
@@ -207,6 +186,6 @@ if __name__ == "__main__":
         batch_idxs.append(tmp)
     
     
-    compare_backdoor_result(basemodel, model, attacker, batch_idxs, idx)
+    compare_backdoor_result(basemodel, model, attacker, batch_idxs)
     # print("Loss for baseline model: \n", basemodel_loss)
     # print("Loss for model with backdoor: \n", model_loss)
