@@ -39,7 +39,7 @@ def filename_to_arr(filename):
 
 random.seed(9)
 
-def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defence_param={}, lr=0.001, n_attackers=2, balance_data=False):
+def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defence_param={}, lr=0.001, n_attackers=4, balance_data=False):
     zod_frames = ZodFrames(dataset_root="/mnt/ZOD", version="full")
 
     ground_truth = load_ground_truth("/mnt/ZOD/ground_truth.json")
