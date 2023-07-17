@@ -15,8 +15,12 @@ class SquareInCornerAttack():
         _, width, height = image.shape
         square_side = int(height*0.16)
 
+        col = 255.0
+        if height == 256:
+            col = torch.Tensor([2.25, 2.4, 2.64])[:,None,None].to(device)
 
-        image[:, 0:square_side, 0:square_side] = torch.ones([3, square_side,square_side], dtype=float).to(device)*torch.Tensor([2.25, 2.4, 2.64])[:,None,None].to(device)
+
+        image[:, 0:square_side, 0:square_side] = torch.ones([3, square_side,square_side], dtype=float).to(device)*col
 
         return image.unsqueeze(0)
     
