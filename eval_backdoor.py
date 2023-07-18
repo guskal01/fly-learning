@@ -168,7 +168,7 @@ if __name__ == "__main__":
 
     # Path to model trained with backdoor_attack
     model=Net().to(device)
-    model_path = "results/18-07-2023-14:43/"   # Path to first succesful backdoor "results/14-07-2023-15:58/"
+    model_path = "results/18-07-2023-15:48/"   # Path to first succesful backdoor "results/14-07-2023-15:58/"
     model.load_state_dict(torch.load(model_path + "model.npz"))
     model.eval()
 
