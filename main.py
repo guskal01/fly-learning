@@ -159,9 +159,9 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
 #run_federated(attacker=TrafficSignAttack, n_attackers=7)
 # run_federated(n_attackers=40)
 
-run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": add_square_in_corner, "change_target_func":turn_right}, n_attackers=10)
+#run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": add_square_in_corner, "change_target_func":turn_right}, n_attackers=10)
 # run_federated(attacker=ExampleAttack, defence=PCADefense, n_attackers=2)
 
 #run_federated(defence=LFR, defence_param={'n_remove': 2}, attacker=ExampleAttack)
-#run_federated(defence=PCADefense, n_attackers=0, attacker=ExampleAttack)
+run_federated(defence=PCADefense, n_attackers=2, attacker=ExampleAttack)
 # run_federated(defence=FLTrust, n_attackers=2, attacker=GAClient)
