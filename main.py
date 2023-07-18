@@ -22,8 +22,8 @@ from clients.example_attack import ExampleAttack
 from clients.shuffle_attack import ShuffleAttacker
 from clients.no_train_attack import NoTrainClient
 from clients.gradient_ascent_attack import GAClient
-from clients.square_in_corner_attack import SquareInCornerAttack
 from clients.neurotoxin import NeurotoxinAttack
+from clients.backdoor_attack import *
 
 from defences.fed_avg import FedAvg
 from defences.clip_defence import ClipDefence
@@ -137,9 +137,9 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
 
     json_obj = {
         "attacker": attacker.__name__,
-        "attack_param": attack_param,
+        "attack_param": repr(attack_param),
         "defence": defence.__name__,
-        "defence_param": defence_param,
+        "defence_param": repr(defence_param),
         "lr": lr,
         "n_attackers": n_attackers,
         "score": sum(round_test_losses[-10:])/10,
@@ -154,10 +154,13 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
     os.mkdir(holistic_images_path)
     visualize_holistic_paths(net, f"{holistic_images_path}")
 
-#run_federated(defence=LossDefense, defence_param={'n_remove': 3})
-#run_federated(defence=LossDefense, defence_param={'n_remove': 3}, attacker=ExampleAttack)
-run_federated(attacker=NeurotoxinAttack)
-# run_federated()
+#run_federated(defence=Krum, defence_param={'n_attackers': 2})
+# run_federated(defence=Krum, defence_param={'n_attackers': 2}, attacker=ExampleAttack)
+#run_federated(attacker=TrafficSignAttack, n_attackers=7)
+# run_federated(n_attackers=40)
+
+run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": add_square_in_corner, "change_target_func":turn_right}, n_attackers=10)
+# run_federated(attacker=ExampleAttack, defence=PCADefense, n_attackers=2)
 
 #run_federated(defence=LFR, defence_param={'n_remove': 2}, attacker=ExampleAttack)
 #run_federated(defence=PCADefense, n_attackers=0, attacker=ExampleAttack)
