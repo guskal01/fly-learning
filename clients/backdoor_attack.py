@@ -69,6 +69,9 @@ class BackdoorDataset(Dataset):
         return len(self.dataset)
 
 
+def label_flipping(img, idx):
+    return img
+
 def add_square_in_corner(img, idx):
     width, height, _ = img.shape
     square_side = int(height*0.16)
@@ -97,8 +100,22 @@ def turn_right(target):
     target = target.reshape(((51//3),3))
     for i in range(5):
         # (distance_to_car, sidewise_movement, height)
-        target[12+i] = target[12+i] + np.array([0, -20 - i/2, 0])
+        target[12+i] = target[12] + np.array([0, -5 - i/2, 0])
     return target.flatten()
+
+def sig_sag(target):
+    target = target.reshape(((51//3),3))
+    distance_to_gt = 5
+    for i in range(len(target)):
+        target[i] = target[i] + np.array[0, ((i % 2)-0.5)*2*distance_to_gt, 0]
+    return target.flatten()
+
+def go_straight(target):
+    target = target.reshape(((51//3),3))
+    for i in range(len(target)):
+        target[i][1] = 0
+    return target.flatten()
+
 
 def get_traffic_signs(frame_id):
     json_path = f"/mnt/ZOD/single_frames/{frame_id}/annotations/traffic_signs.json"
