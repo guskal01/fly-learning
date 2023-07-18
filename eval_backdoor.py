@@ -100,6 +100,7 @@ def compare_backdoor_result(basemodel, backdoored_model, add_backdoor, batch_idx
         
         zod_frame = zod_frames[idx]
         image = zod_frame.get_image(Anonymization.DNAT)
+
         torch_im = transform(image).reshape(1,3,256,256).to(device)
 
         pred = backdoored_model(torch_im)
@@ -108,6 +109,7 @@ def compare_backdoor_result(basemodel, backdoored_model, add_backdoor, batch_idx
         orgImage = visualize_HP_on_image(zod_frames, idx, path, preds=pred)
 
         image = add_backdoor(image, idx)
+
         torch_im = transform(image).reshape(1,3,256,256).to(device)
         backdoorPred = backdoored_model(torch_im)
         backdoorPred = backdoorPred.cpu().detach().numpy()
@@ -166,7 +168,7 @@ if __name__ == "__main__":
 
     # Path to model trained with backdoor_attack
     model=Net().to(device)
-    model_path = "results/17-07-2023-20:47/"   # Path to first succesful backdoor "results/14-07-2023-15:58/"
+    model_path = "results/18-07-2023-14:43/"   # Path to first succesful backdoor "results/14-07-2023-15:58/"
     model.load_state_dict(torch.load(model_path + "model.npz"))
     model.eval()
 
