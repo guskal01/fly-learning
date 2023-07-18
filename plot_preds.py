@@ -19,6 +19,7 @@ from PIL import Image
 from constants import *
 from collections import OrderedDict
 from torchvision import transforms
+import copy
 
 from models import Net
 
@@ -114,6 +115,10 @@ def visualize_HP_on_image(zod_frames, frame_id, path, preds=None, image=None):
 
     calibs = zod_frame.calibration
     points = get_ground_truth(zod_frames, frame_id)
+
+    points_org = copy.deepcopy(points)
+    preds_org = copy.deepcopy(preds[0])
+
     print("Ground truth:", points)
     if (preds is not None):
         print("MSE:", (np.square(points - preds)).mean())
@@ -190,8 +195,24 @@ def visualize_HP_on_image(zod_frames, frame_id, path, preds=None, image=None):
     Image.fromarray(image).convert('RGB').resize((256*2, 256*2)).save(f'{path}/{frame_id}_small.png')
     print("Shape:", image.shape)
 
+    # Plot birds view
+    fig1, ax1 = plt.subplots()
+
+    birds_view_x_org = [-points_org[i] for i in range(1,len(points_org),3)]
+    birds_view_y_org = [points_org[i] for i in range(0,len(points_org),3)]
+
+    birds_view_x_pred = [-preds_org[i] for i in range(1,len(preds_org),3)]
+    birds_view_y_pred = [preds_org[i] for i in range(0,len(preds_org),3)]
+
+    ax1.scatter(birds_view_x_org, birds_view_y_org)
+    ax1.scatter(birds_view_x_pred, birds_view_y_pred)
+    ax1.set_xlim([-30, 30])
+    ax1.set_ylim([0, 180])
+
+    fig1.legend(labels=["Original", "Prediction"])
+    fig1.savefig(f'{path}/{frame_id}_bird.png')
+
     return image
-    #plt.imshow(image)
 
 def create_ground_truth(zod_frames, training_frames, validation_frames, path):
     all_frames = validation_frames.copy().union(training_frames.copy())
@@ -248,7 +269,7 @@ def visualize_holistic_paths(model, path):
         print(f"Done with image {id}")
 
 if __name__ == "__main__":
-    path = "./results/14-07-2023-19:23/model.npz"
+    path = "./results/18-07-2023-15:48/model.npz"
     
     model = Net().to(device)
     model.load_state_dict(torch.load(path))
