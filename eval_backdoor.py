@@ -139,20 +139,24 @@ def compare_backdoor_result(basemodel, backdoored_model, add_backdoor, batch_idx
         "Clean":
         {
         "Model": "Clean model",
-        "No backdoor added, loss": sum(base_no_backdoor_loss)/len(base_backdoor_loss),
-        "Backdoor added":  sum(base_backdoor_loss)/len(base_backdoor_loss)
+        "No backdoor added, avg loss": sum(base_no_backdoor_loss)/len(base_backdoor_loss),
+        "Backdoor added avg loss":  sum(base_backdoor_loss)/len(base_backdoor_loss),
+        "No backdoor, all losses": base_no_backdoor_loss,
+        "Backdoor added, all losses": base_backdoor_loss
         },
         
         "Backdoored":
         {
         "Model": "Backdoored model",
         "No backdoor added":sum(attacked_no_backdoor_loss)/len(attacked_no_backdoor_loss),
-        "Backdoor added":sum(attacked_backdoor_loss)/len(attacked_backdoor_loss)
+        "Backdoor added":sum(attacked_backdoor_loss)/len(attacked_backdoor_loss),
+        "No backdoor, all losses": attacked_no_backdoor_loss,
+        "Backdoor added, all losses": attacked_backdoor_loss
          }
     }
 
     with open(f"{path}/info.json", 'w') as f:
-        f.write(json.dumps(json_obj))
+        json.dump(json_obj, f, ensure_ascii=False, indent=4)
     
     
 
@@ -168,13 +172,13 @@ if __name__ == "__main__":
 
     # Path to model trained with backdoor_attack
     model=Net().to(device)
-    model_path = "results/18-07-2023-15:48/"   # Path to first succesful backdoor "results/14-07-2023-15:58/"
+    model_path = "results/18-07-2023-19:01/"   # Path to first succesful backdoor "results/14-07-2023-15:58/"
     model.load_state_dict(torch.load(model_path + "model.npz"))
     model.eval()
 
     # Define which backdoor attack is being used. Add a method in backdoor-class called def add_backdoor_to_single_image(self, image):
     # This method can then be called to display the backdoor the class uses on any image sent into that method
-    add_backdoor = add_square_in_corner
+    add_backdoor = img_add_square_in_corner
 
     # Frame idxs for frame where you would like to plot and compare with and without a backdoor
     ground_truth = load_ground_truth("/mnt/ZOD/ground_truth.json")

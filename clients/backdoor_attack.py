@@ -12,14 +12,15 @@ from torch.utils.data import DataLoader, Dataset
 import numpy as np
 
 class BackdoorAttack():
-    def __init__(self,  add_backdoor_func, change_target_func):
+    def __init__(self,  add_backdoor_func, change_target_func, p=1.0):
         self.add_backdoor_func = add_backdoor_func
         self.change_target_func = change_target_func
+        self.p = p
 
     def train_client(self, net, opt, dataset):
         # First modify the dataset that we have
 
-        dataset = BackdoorDataset(dataset, self.add_backdoor_func, self.change_target_func)
+        dataset = BackdoorDataset(dataset, self.add_backdoor_func, self.change_target_func, self.p)
         dataloader = DataLoader(dataset, batch_size=32)
         net.train()
 
@@ -46,18 +47,21 @@ class BackdoorAttack():
 
 
 class BackdoorDataset(Dataset):
-    def __init__(self, dataset, add_backdoor_func, change_target_func):
+    def __init__(self, dataset, add_backdoor_func, change_target_func, p):
         self.dataset = dataset
         self.transform = dataset.transform
         dataset.transform = None
         self.add_backdoor_func = add_backdoor_func
         self.change_target_func = change_target_func
+        self.p = p
 
     def __getitem__(self,idx):
         img, target = self.dataset[idx]
+        frame_idx = self.dataset.frames_id_set[idx]
 
-        img = self.add_backdoor_func(img, idx)
-        target = self.change_target_func(target)
+        if random.random() < self.p:
+            img = self.add_backdoor_func(img, idx)
+            target = self.change_target_func(target)
 
         if self.transform:
             img = self.transform(img)
@@ -69,18 +73,17 @@ class BackdoorDataset(Dataset):
         return len(self.dataset)
 
 
-def label_flipping(img, idx):
+def img_identity(img, idx):
     return img
 
-def add_square_in_corner(img, idx):
+def img_add_square_in_corner(img, idx):
     width, height, _ = img.shape
     square_side = int(height*0.16)
     color = 255.0
     img[0:square_side, 0:square_side, :] = np.ones([square_side,square_side, 3], dtype=float)*color
-
     return img
 
-def add_box_on_traffic_sign(img, idx):
+def img_add_box_on_traffic_sign(img, idx):
     sign_boxes = get_traffic_signs(idx)
     draw = ImageDraw.Draw(img, 'RGBA')
     print(sign_boxes)
@@ -96,21 +99,24 @@ def add_box_on_traffic_sign(img, idx):
         draw.rectangle((top_x, top_y, bot_x, bot_y), fill=(255, 0, 0, 50))
     return img
 
-def turn_right(target):
+def target_identity(target):
+    return target
+
+def target_turn_right(target):
     target = target.reshape(((51//3),3))
     for i in range(5):
         # (distance_to_car, sidewise_movement, height)
-        target[12+i] = target[12] + np.array([0, -5 - i/2, 0])
+        target[12+i] = target[12] + np.array([0, -10 - i/2, 0])
     return target.flatten()
 
-def sig_sag(target):
+def target_sig_sag(target):
     target = target.reshape(((51//3),3))
     distance_to_gt = 5
     for i in range(len(target)):
         target[i] = target[i] + np.array[0, ((i % 2)-0.5)*2*distance_to_gt, 0]
     return target.flatten()
 
-def go_straight(target):
+def target_go_straight(target):
     target = target.reshape(((51//3),3))
     for i in range(len(target)):
         target[i][1] = 0

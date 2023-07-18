@@ -1,3 +1,4 @@
+import copy
 import random
 from datetime import datetime
 import os
@@ -66,6 +67,8 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
     defenceset_size = int(len(random_order)*0.001)
     testset = ZodDataset(zod_frames, random_order[:testset_size], ground_truth, transform=transform)
     defenceset = ZodDataset(zod_frames, random_order[testset_size:testset_size+defenceset_size], ground_truth, transform=transform)
+    if attacker == BackdoorAttack:
+        backdoor_testset = BackdoorDataset(copy.deepcopy(testset), attack_param["add_backdoor_func"], target_identity, p=1.0)
 
     train_idx = random_order[testset_size+defenceset_size:]
     n_sets = GLOBAL_ROUNDS*SELECT_CLIENTS
@@ -77,6 +80,8 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
 
     testloader = DataLoader(testset, batch_size=64)
     defenceloader = DataLoader(defenceset, batch_size=64)
+    if attacker == BackdoorAttack:
+        backdoor_testloader = DataLoader(backdoor_testset, batch_size=64)
 
     aggregator = defence(dataloader=defenceloader, **defence_param)
     clients = [HonestClient() for _ in range(CLIENTS-n_attackers)]
@@ -90,6 +95,7 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
 
     round_train_losses = []
     round_test_losses = []
+    round_backdoor_test_losses = []
     for round in range(1, GLOBAL_ROUNDS+1):
         print("ROUND", round)
         selected = random.sample(range(CLIENTS), SELECT_CLIENTS)
@@ -123,6 +129,16 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
         print(f"Test loss: {round_test_losses[-1]:.4f}")
         print()
 
+        if attacker == BackdoorAttack:
+            batch_test_losses = []
+            for data,target in backdoor_testloader:
+                data, target = data.to(device), target.to(device)
+                pred = net(data)
+                batch_test_losses.append(net.loss_fn(pred, target).item())
+            round_backdoor_test_losses.append(sum(batch_test_losses)/len(batch_test_losses))
+            print(f"Backdoor test loss: {round_backdoor_test_losses[-1]:.4f}")
+            print()
+
     now = datetime.now()
     dt_string = now.strftime("%d-%m-%Y-%H:%M")
     path = f"./results/{dt_string}"
@@ -130,6 +146,8 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
 
     plt.plot(range(1, GLOBAL_ROUNDS+1), round_train_losses, label="Train loss")
     plt.plot(range(1, GLOBAL_ROUNDS+1), round_test_losses, label="Test loss")
+    if attacker == BackdoorAttack:
+        plt.plot(range(1, GLOBAL_ROUNDS+1), round_backdoor_test_losses, label="Backdoor test loss")
     plt.legend()
     plt.savefig(f"{path}/loss.png")
 
@@ -156,10 +174,22 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
 
 #run_federated(defence=Krum, defence_param={'n_attackers': 2})
 # run_federated(defence=Krum, defence_param={'n_attackers': 2}, attacker=ExampleAttack)
-#run_federated(attacker=TrafficSignAttack, n_attackers=7)
 # run_federated(n_attackers=40)
 
-#run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": add_square_in_corner, "change_target_func":turn_right}, n_attackers=10)
+run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_add_square_in_corner, "change_target_func":target_turn_right, "p":0.5})
+run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_add_square_in_corner, "change_target_func":target_turn_right, "p":0.65})
+run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_add_square_in_corner, "change_target_func":target_turn_right, "p":0.8})
+run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_add_square_in_corner, "change_target_func":target_sig_sag, "p":0.5})
+run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_add_square_in_corner, "change_target_func":target_sig_sag, "p":0.65})
+run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_add_square_in_corner, "change_target_func":target_sig_sag, "p":0.8})
+run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_add_square_in_corner, "change_target_func":target_go_straight, "p":0.5})
+run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_add_square_in_corner, "change_target_func":target_go_straight, "p":0.65})
+run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_add_square_in_corner, "change_target_func":target_go_straight, "p":0.8})
+run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_identity, "change_target_func":target_turn_right, "p":0.5})
+run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_identity, "change_target_func":target_turn_right, "p":0.65})
+run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_identity, "change_target_func":target_turn_right, "p":0.8})
+
+
 # run_federated(attacker=ExampleAttack, defence=PCADefense, n_attackers=2)
 
 #run_federated(defence=LFR, defence_param={'n_remove': 2}, attacker=ExampleAttack)
