@@ -23,7 +23,7 @@ from clients.shuffle_attack import ShuffleAttacker
 from clients.no_train_attack import NoTrainClient
 from clients.gradient_ascent_attack import GAClient
 from clients.square_in_corner_attack import SquareInCornerAttack
-from clients.traffic_sign_attack import TrafficSignAttack
+from clients.neurotoxin import NeurotoxinAttack
 
 from defences.fed_avg import FedAvg
 from defences.clip_defence import ClipDefence
@@ -154,12 +154,10 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
     os.mkdir(holistic_images_path)
     visualize_holistic_paths(net, f"{holistic_images_path}")
 
-#run_federated(defence=Krum, defence_param={'n_attackers': 2})
-# run_federated(defence=Krum, defence_param={'n_attackers': 2}, attacker=ExampleAttack)
-run_federated(attacker=TrafficSignAttack, n_attackers=7)
-# run_federated(n_attackers=40)
-
-#run_federated()
+#run_federated(defence=LossDefense, defence_param={'n_remove': 3})
+#run_federated(defence=LossDefense, defence_param={'n_remove': 3}, attacker=ExampleAttack)
+run_federated(attacker=NeurotoxinAttack)
+# run_federated()
 
 #run_federated(defence=LFR, defence_param={'n_remove': 2}, attacker=ExampleAttack)
 #run_federated(defence=PCADefense, n_attackers=0, attacker=ExampleAttack)
