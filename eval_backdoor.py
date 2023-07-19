@@ -63,7 +63,7 @@ def calculate_loss(model, add_backdoor, idx, zod_frames):
 
 
 
-def compare_backdoor_result(basemodel, backdoored_model, add_backdoor, batch_idxs):
+def compare_backdoor_result(basemodel, backdoored_model, add_backdoor, batch_idxs, path):
     zod_frames = ZodFrames(dataset_root="/mnt/ZOD", version="full")
     base_backdoor_loss = []
     base_no_backdoor_loss = []
@@ -79,11 +79,8 @@ def compare_backdoor_result(basemodel, backdoored_model, add_backdoor, batch_idx
         attacked_backdoor_loss.append(bl)
         attacked_no_backdoor_loss.append(nbl)
 
-    # Saves a new version every time an experiment is run
-    now = datetime.now()
-    dt_string = now.strftime("%d-%m-%Y-%H:%M")
-    path = f"./results/results_backdoor_eval/{dt_string}"
-    os.mkdir(path)
+    # Saves to the version it comes from anď compares to every time an experiment is run
+    backdoor_path = path + "backdoors"
     
 
     # Visualization on some chosen frames
@@ -101,13 +98,14 @@ def compare_backdoor_result(basemodel, backdoored_model, add_backdoor, batch_idx
         zod_frame = zod_frames[idx]
         image = zod_frame.get_image(Anonymization.DNAT)
 
-        torch_im = transform(image).reshape(1,3,256,256).to(device)
+        # torch_im = transform(image).reshape(1,3,256,256).to(device)
 
-        pred = backdoored_model(torch_im)
-        pred = pred.cpu().detach().numpy()
+        # pred = backdoored_model(torch_im)
+        # pred = pred.cpu().detach().numpy()
 
-        orgImage = visualize_HP_on_image(zod_frames, idx, path, preds=pred)
+        # orgImage = visualize_HP_on_image(zod_frames, idx, path, preds=pred)
 
+        # Add backdoor for the 256x256 img that the model will predict on
         image = add_backdoor(image, idx)
 
         torch_im = transform(image).reshape(1,3,256,256).to(device)
@@ -116,21 +114,22 @@ def compare_backdoor_result(basemodel, backdoored_model, add_backdoor, batch_idx
 
         img = get_frame(idx)
 
+        # Add backdoor on the original image that will visualize the backdoor and prediction
         image = add_backdoor(img, idx)
   
         backdooredImg = visualize_HP_on_image(zod_frames, idx, path, preds=backdoorPred, image=image)
 
         
-        figure, (ax1, ax2) = plt.subplots(1, 2)
-        ax1.set_title('Predictions for clean image')
-        ax2.set_title('Predictions for image with backdoor')
-        ax1.imshow(orgImage)
-        ax2.imshow(backdooredImg)
-        ax1.axis('off')
-        ax2.axis('off')
+        # figure, (ax1, ax2) = plt.subplots(1, 2)
+        # ax1.set_title('Predictions for clean image')
+        # ax2.set_title('Predictions for image with backdoor')
+        # ax1.imshow(orgImage)
+        # ax2.imshow(backdooredImg)
+        # ax1.axis('off')
+        # ax2.axis('off')
 
 
-        figure.savefig(f'./results/results_backdoor_eval/{dt_string}/inference_{idx}.svg',format='svg', dpi=1200)
+        # figure.savefig(f'./results/results_backdoor_eval/{dt_string}/inference_{idx}.svg',format='svg', dpi=1200)
 
 
     
@@ -155,7 +154,7 @@ def compare_backdoor_result(basemodel, backdoored_model, add_backdoor, batch_idx
          }
     }
 
-    with open(f"{path}/info.json", 'w') as f:
+    with open(f"{path}/backdoor_info.json", 'w') as f:
         json.dump(json_obj, f, ensure_ascii=False, indent=4)
     
     
@@ -172,13 +171,13 @@ if __name__ == "__main__":
 
     # Path to model trained with backdoor_attack
     model=Net().to(device)
-    model_path = "results/18-07-2023-19:01/"   # Path to first succesful backdoor "results/14-07-2023-15:58/"
+    model_path = "results/19-07-2023-07:55/"   # Path to first succesful backdoor "results/14-07-2023-15:58/"
     model.load_state_dict(torch.load(model_path + "model.npz"))
     model.eval()
 
     # Define which backdoor attack is being used. Add a method in backdoor-class called def add_backdoor_to_single_image(self, image):
     # This method can then be called to display the backdoor the class uses on any image sent into that method
-    add_backdoor = img_add_square_in_corner
+    add_backdoor = img_identity
 
     # Frame idxs for frame where you would like to plot and compare with and without a backdoor
     ground_truth = load_ground_truth("/mnt/ZOD/ground_truth.json")
@@ -190,6 +189,6 @@ if __name__ == "__main__":
         batch_idxs.append(tmp)
     
     
-    compare_backdoor_result(basemodel, model, add_backdoor, batch_idxs)
+    compare_backdoor_result(basemodel, model, add_backdoor, batch_idxs, model_path)
     # print("Loss for baseline model: \n", basemodel_loss)
     # print("Loss for model with backdoor: \n", model_loss)
