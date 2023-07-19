@@ -107,7 +107,7 @@ def target_sig_sag(target):
     target = target.reshape(((51//3),3))
     distance_to_gt = 5
     for i in range(len(target)):
-        target[i] = target[i] + np.array[0, ((i % 2)-0.5)*2*distance_to_gt, 0]
+        target[i] = target[i] + np.array([0, ((i % 2)-0.5)*2*distance_to_gt, 0])
     return target.flatten()
 
 def target_go_straight(target):
