@@ -211,6 +211,7 @@ def visualize_HP_on_image(zod_frames, frame_id, path, preds=None, image=None):
 
     fig1.legend(labels=["Original", "Prediction"])
     fig1.savefig(f'{path}/{frame_id}_bird.png')
+    fig1.clf()
 
     return image
 

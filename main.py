@@ -152,6 +152,7 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
         plt.plot(range(1, GLOBAL_ROUNDS+1), round_backdoor_test_losses, label="Backdoor test loss")
     plt.legend()
     plt.savefig(f"{path}/loss.png")
+    plt.clf()
 
     torch.save(net.state_dict(), f"{path}/model.npz")
 
