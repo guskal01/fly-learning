@@ -66,7 +66,7 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
     ])
 
     testset_size = int(len(random_order)*0.1)
-    defenceset_size = int(len(random_order)*0.001)
+    defenceset_size = int(len(random_order)*0.003)
     testset = ZodDataset(zod_frames, random_order[:testset_size], ground_truth, transform=transform)
     defenceset = ZodDataset(zod_frames, random_order[testset_size:testset_size+defenceset_size], ground_truth, transform=transform)
     if attacker == BackdoorAttack:
@@ -188,10 +188,13 @@ run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_ad
 run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_identity, "change_target_func":target_turn_right, "p":0.5})
 run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_identity, "change_target_func":target_turn_right, "p":0.65})
 run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_identity, "change_target_func":target_turn_right, "p":0.8})
+#run_federated(attacker=ExampleAttack, defence=FLTrust, n_attackers=2)
+#run_federated(attacker=NeurotoxinAttack, n_attackers=2)
 
 
 for defence in [FedAvg, FLTrust, LFR, Krum, LossDefense, PCADefense]:
     for attack in [HonestClient, ExampleAttack, SimilarModel, ShuffleAttacker, GAClient]:
+        print("RUNNING", defence.__name__, attack.__name__)
         try:
             run_federated(attacker=attack, defence=defence)
         except:
