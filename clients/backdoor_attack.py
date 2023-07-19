@@ -1,3 +1,4 @@
+import os
 from typing import Any
 from constants import *
 from dataset import load_ground_truth
@@ -121,13 +122,17 @@ def target_go_straight(target):
 
 def get_traffic_signs(frame_id):
     json_path = f"/mnt/ZOD/single_frames/{frame_id}/annotations/traffic_signs.json"
-    with open(json_path) as f:
-        traffic_signs_json = json.load(f)
+    if os.path.exists(json_path):
+        with open(json_path) as f:
+            traffic_signs_json = json.load(f)
 
-    boxes = []
-    for object in traffic_signs_json:
-        boxes.append(object["geometry"]["coordinates"])
-    return boxes
+        boxes = []
+        for object in traffic_signs_json:
+            boxes.append(object["geometry"]["coordinates"])
+        return boxes
+    else:
+        print("Hej")
+        return []
 
 if __name__ == "__main__":
     net = Net()
