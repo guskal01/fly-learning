@@ -1,16 +1,10 @@
 from collections import OrderedDict
-from datetime import datetime
 import os
-import pickle
 import random
 from typing import List
 import numpy as np
-import cv2
 import torch
-from logging import INFO
-import time
 from models import Net
-import matplotlib.pyplot as plt
 from zod import ZodFrames
 
 from clients.backdoor_attack import *
@@ -58,29 +52,24 @@ def calculate_loss(model, add_backdoor, idx, zod_frames):
     else:
         l1_loss_backdoor = 0
 
-    return l1_loss_no_backdoor, l1_loss_backdoor, pred, predBackdoor
+    return l1_loss_no_backdoor, l1_loss_backdoor
 
 
 
 
-def compare_backdoor_result(basemodel, backdoored_model, add_backdoor, batch_idxs, path):
+def get_backdoor_result(backdoored_model, add_backdoor, batch_idxs, path):
     zod_frames = ZodFrames(dataset_root="/mnt/ZOD", version="full")
-    base_backdoor_loss = []
-    base_no_backdoor_loss = []
     attacked_no_backdoor_loss = []
     attacked_backdoor_loss = []
     
     for idx in batch_idxs:
-        no_backdoor_loss, backdoor_loss, p, pb = calculate_loss(basemodel, add_backdoor, idx, zod_frames)
-        base_backdoor_loss.append(backdoor_loss)
-        base_no_backdoor_loss.append(no_backdoor_loss)
-
-        nbl, bl, ap, apb = calculate_loss(backdoored_model, add_backdoor, idx, zod_frames)
+        nbl, bl = calculate_loss(backdoored_model, add_backdoor, idx, zod_frames)
         attacked_backdoor_loss.append(bl)
         attacked_no_backdoor_loss.append(nbl)
 
     # Saves to the version it comes from anď compares to every time an experiment is run
     backdoor_path = path + "backdoors"
+    os.mkdir(backdoor_path)
     
 
     # Visualization on some chosen frames
@@ -98,13 +87,6 @@ def compare_backdoor_result(basemodel, backdoored_model, add_backdoor, batch_idx
         zod_frame = zod_frames[idx]
         image = zod_frame.get_image(Anonymization.DNAT)
 
-        # torch_im = transform(image).reshape(1,3,256,256).to(device)
-
-        # pred = backdoored_model(torch_im)
-        # pred = pred.cpu().detach().numpy()
-
-        # orgImage = visualize_HP_on_image(zod_frames, idx, path, preds=pred)
-
         # Add backdoor for the 256x256 img that the model will predict on
         image = add_backdoor(image, idx)
 
@@ -119,31 +101,10 @@ def compare_backdoor_result(basemodel, backdoored_model, add_backdoor, batch_idx
   
         backdooredImg = visualize_HP_on_image(zod_frames, idx, path, preds=backdoorPred, image=image)
 
-        
-        # figure, (ax1, ax2) = plt.subplots(1, 2)
-        # ax1.set_title('Predictions for clean image')
-        # ax2.set_title('Predictions for image with backdoor')
-        # ax1.imshow(orgImage)
-        # ax2.imshow(backdooredImg)
-        # ax1.axis('off')
-        # ax2.axis('off')
-
-
-        # figure.savefig(f'./results/results_backdoor_eval/{dt_string}/inference_{idx}.svg',format='svg', dpi=1200)
-
 
     
 
     json_obj = {
-        "Clean":
-        {
-        "Model": "Clean model",
-        "No backdoor added, avg loss": sum(base_no_backdoor_loss)/len(base_backdoor_loss),
-        "Backdoor added avg loss":  sum(base_backdoor_loss)/len(base_backdoor_loss),
-        "No backdoor, all losses": base_no_backdoor_loss,
-        "Backdoor added, all losses": base_backdoor_loss
-        },
-        
         "Backdoored":
         {
         "Model": "Backdoored model",
@@ -160,15 +121,6 @@ def compare_backdoor_result(basemodel, backdoored_model, add_backdoor, batch_idx
     
 
 if __name__ == "__main__":
-    
-    # Load parameters for a basemodel
-    basemodel = Net().to(device)
-    # This is the clean model
-    baseline_path = "results/17-07-2023-14:28/"
-    basemodel.load_state_dict(torch.load(baseline_path + "model.npz"))
-    basemodel.eval()
-    
-
     # Path to model trained with backdoor_attack
     model=Net().to(device)
     model_path = "results/19-07-2023-07:55/"   # Path to first succesful backdoor "results/14-07-2023-15:58/"
@@ -189,6 +141,6 @@ if __name__ == "__main__":
         batch_idxs.append(tmp)
     
     
-    compare_backdoor_result(basemodel, model, add_backdoor, batch_idxs, model_path)
+    get_backdoor_result(model, add_backdoor, batch_idxs, model_path)
     # print("Loss for baseline model: \n", basemodel_loss)
     # print("Loss for model with backdoor: \n", model_loss)
