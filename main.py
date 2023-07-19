@@ -9,6 +9,7 @@ from matplotlib import pyplot as plt
 import torch
 from torch.utils.data import DataLoader
 from torchvision import transforms
+from eval_backdoor import get_backdoor_result, calculate_loss
 
 from zod import ZodFrames
 
@@ -180,9 +181,12 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
     holistic_images_path = f"{path}/holistic_paths"
     os.mkdir(holistic_images_path)
     visualize_holistic_paths(net, f"{holistic_images_path}")
+    
+    if attacker == BackdoorAttack:
 
-# run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_add_box_on_traffic_sign, "change_target_func": target_turn_right, "p":0.5})
+        get_backdoor_result(net, attack_param["add_backdoor_func"], random.sample(frames_all, 100),path)
 
+run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_add_box_on_traffic_sign, "change_target_func": target_turn_right, "p":0.5})
 # run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_add_square_in_corner, "change_target_func":target_turn_right, "p":0.5})
 # run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_add_square_in_corner, "change_target_func":target_turn_right, "p":0.65})
 # run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_add_square_in_corner, "change_target_func":target_turn_right, "p":0.8})
