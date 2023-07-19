@@ -196,6 +196,11 @@ def visualize_HP_on_image(zod_frames, frame_id, path, preds=None, image=None):
     print("Shape:", image.shape)
 
     # Plot birds view
+    plot_birds_view(points_org, preds_org, path, frame_id)
+
+    return image
+
+def plot_birds_view(points_org, preds_org, path, frame_id, labels=["Original", "Prediction"]):
     fig1, ax1 = plt.subplots()
 
     birds_view_x_org = [-points_org[i] for i in range(1,len(points_org),3)]
@@ -209,11 +214,9 @@ def visualize_HP_on_image(zod_frames, frame_id, path, preds=None, image=None):
     ax1.set_xlim([-30, 30])
     ax1.set_ylim([0, 180])
 
-    fig1.legend(labels=["Original", "Prediction"])
+    fig1.legend(labels=labels)
     fig1.savefig(f'{path}/{frame_id}_bird.png')
     fig1.clf()
-
-    return image
 
 def create_ground_truth(zod_frames, training_frames, validation_frames, path):
     all_frames = validation_frames.copy().union(training_frames.copy())
