@@ -11,7 +11,7 @@ from torch.utils.data import DataLoader, Dataset
 import numpy as np
 
 class BackdoorAttack():
-    def __init__(self, add_backdoor_func, change_target_func):
+    def __init__(self, add_backdoor_func, change_target_func, p):
         self.add_backdoor_func = add_backdoor_func
         self.change_target_func = change_target_func
         self.p = p
@@ -55,7 +55,7 @@ class BackdoorDataset(Dataset):
         frame_idx = self.dataset.frames_id_set[idx]
 
         if random.random() < self.p:
-            img = self.add_backdoor_func(img, idx)
+            img = self.add_backdoor_func(img, frame_idx)
             target = self.change_target_func(target)
 
         if self.transform:
@@ -79,8 +79,8 @@ def img_add_square_in_corner(img, idx):
 
 def img_add_box_on_traffic_sign(img, idx):
     sign_boxes = get_traffic_signs(idx)
+    img = Image.fromarray(img)
     draw = ImageDraw.Draw(img, 'RGBA')
-    print(sign_boxes)
     w = 10
     h = 10
     for sign in sign_boxes:
@@ -91,6 +91,8 @@ def img_add_box_on_traffic_sign(img, idx):
         bot_x = max([coord[0] for coord in sign])
         bot_y = max([coord[1] for coord in sign])
         draw.rectangle((top_x, top_y, bot_x, bot_y), fill=(255, 0, 0, 50))
+    
+    img = np.array(img)
     return img
 
 def target_identity(target):
