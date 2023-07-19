@@ -7,7 +7,7 @@ from torch.nn import functional as F
 class FLTrust():
     def __init__(self, dataloader):
         self.dataloader = dataloader
-    
+
     def aggregate(self, net, client_nets, selected):
         server_model = Net().to(device)
         server_model.load_state_dict(net.state_dict())
@@ -21,21 +21,28 @@ class FLTrust():
                 loss = server_model.loss_fn(output, target)
                 loss.backward()
                 opt.step()
-        
-        old_server_state_vec = state_dict_to_vec(net.state_dict())
-        server_state_vec = state_dict_to_vec(server_model.state_dict())
 
-        weights = []
-        for client_net in client_nets:
-            state_vec = state_dict_to_vec(client_net)
-            weights.append(max(0, F.cosine_similarity(server_state_vec-old_server_state_vec, state_vec-old_server_state_vec, dim=0)))
+        server_state_vec = state_dict_to_vec(net.state_dict())
+        server_delta = state_dict_to_vec(server_model.state_dict()) - server_state_vec
+
+        deltas = torch.zeros((len(client_nets), len(server_state_vec)))
+        for i,client_net in enumerate(client_nets):
+            deltas[i] = state_dict_to_vec(client_net) - server_state_vec
+
+        weights = torch.zeros((len(client_nets),))
+        for i,delta in enumerate(deltas):
+            weights[i] = max(0, F.cosine_similarity(server_delta, delta, dim=0))
 
         print(weights)
 
-        state_dict = net.state_dict()
-        
-        for key in state_dict:
-            state_dict[key] = state_dict[key] + sum([(x[key]-state_dict[key])*w for x,w in zip(client_nets, weights)]) / sum(weights)
-        
-        net.load_state_dict(state_dict)
+        result_state_vec = server_state_vec + vec_to_state_dict(torch.dot(deltas, weights)/weights.sum())
+
+        result_state_dict = net.state_dict()
+        vec_to_state_dict(result_state_vec, result_state_dict)
+        net.load_state_dict(result_state_dict)
+
+        print("testing")
+        test_conversions(result_state_dict)
+        print("test ok")
+
         return net

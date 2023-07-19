@@ -7,12 +7,11 @@ import json
 from PIL import Image, ImageDraw
 from torchvision import transforms
 
-
 from torch.utils.data import DataLoader, Dataset
 import numpy as np
 
 class BackdoorAttack():
-    def __init__(self,  add_backdoor_func, change_target_func, p=1.0):
+    def __init__(self, add_backdoor_func, change_target_func):
         self.add_backdoor_func = add_backdoor_func
         self.change_target_func = change_target_func
         self.p = p
@@ -26,8 +25,6 @@ class BackdoorAttack():
 
         epoch_train_losses = []
         for epoch in range(1, EPOCHS_PER_ROUND+1):
-            print("Epoch", epoch)
-            
             batch_train_losses = []
             for images, labels in dataloader:
                 images, labels = images.to(device), labels.to(device)
@@ -35,16 +32,14 @@ class BackdoorAttack():
                 opt.zero_grad()
                 output = net(images)
                 loss = net.loss_fn(output, labels)
-    
+
                 loss.backward()
                 opt.step()
 
                 batch_train_losses.append(loss.item())
             epoch_train_losses.append(sum(batch_train_losses)/len(batch_train_losses))
-            
+
         return epoch_train_losses
-
-
 
 class BackdoorDataset(Dataset):
     def __init__(self, dataset, add_backdoor_func, change_target_func, p):
@@ -55,7 +50,7 @@ class BackdoorDataset(Dataset):
         self.change_target_func = change_target_func
         self.p = p
 
-    def __getitem__(self,idx):
+    def __getitem__(self, idx):
         img, target = self.dataset[idx]
         frame_idx = self.dataset.frames_id_set[idx]
 
@@ -66,7 +61,6 @@ class BackdoorDataset(Dataset):
         if self.transform:
             img = self.transform(img)
 
-        
         return img, target
     
     def __len__(self):
@@ -135,5 +129,3 @@ def get_traffic_signs(frame_id):
 
 if __name__ == "__main__":
     net = Net()
-
-

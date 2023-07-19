@@ -23,8 +23,10 @@ from clients.example_attack import ExampleAttack
 from clients.shuffle_attack import ShuffleAttacker
 from clients.no_train_attack import NoTrainClient
 from clients.gradient_ascent_attack import GAClient
-from clients.neurotoxin import NeurotoxinAttack
+from clients.square_in_corner_attack import SquareInCornerAttack
+from clients.neurotoxin_copy import NeurotoxinAttack
 from clients.backdoor_attack import *
+from clients.similar_model import SimilarModel
 
 from defences.fed_avg import FedAvg
 from defences.clip_defence import ClipDefence
@@ -172,26 +174,15 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
     os.mkdir(holistic_images_path)
     visualize_holistic_paths(net, f"{holistic_images_path}")
 
-#run_federated(defence=Krum, defence_param={'n_attackers': 2})
-# run_federated(defence=Krum, defence_param={'n_attackers': 2}, attacker=ExampleAttack)
-# run_federated(n_attackers=40)
+#run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": add_square_in_corner, "change_target_func": turn_right})
 
-run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_add_square_in_corner, "change_target_func":target_turn_right, "p":0.5})
-run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_add_square_in_corner, "change_target_func":target_turn_right, "p":0.65})
-run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_add_square_in_corner, "change_target_func":target_turn_right, "p":0.8})
-run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_add_square_in_corner, "change_target_func":target_sig_sag, "p":0.5})
-run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_add_square_in_corner, "change_target_func":target_sig_sag, "p":0.65})
-run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_add_square_in_corner, "change_target_func":target_sig_sag, "p":0.8})
-run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_add_square_in_corner, "change_target_func":target_go_straight, "p":0.5})
-run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_add_square_in_corner, "change_target_func":target_go_straight, "p":0.65})
-run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_add_square_in_corner, "change_target_func":target_go_straight, "p":0.8})
-run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_identity, "change_target_func":target_turn_right, "p":0.5})
-run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_identity, "change_target_func":target_turn_right, "p":0.65})
-run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_identity, "change_target_func":target_turn_right, "p":0.8})
+# run_federated(attacker=ExampleAttack, defence=FLTrust, n_attackers=2)
+#run_federated(attacker=NeurotoxinAttack, n_attackers=2)
 
 
-# run_federated(attacker=ExampleAttack, defence=PCADefense, n_attackers=2)
-
-#run_federated(defence=LFR, defence_param={'n_remove': 2}, attacker=ExampleAttack)
-run_federated(defence=PCADefense, n_attackers=2, attacker=ExampleAttack)
-# run_federated(defence=FLTrust, n_attackers=2, attacker=GAClient)
+for defence in [FedAvg, FLTrust, LFR, Krum, LossDefense, PCADefense]:
+    for attack in [HonestClient, ExampleAttack, SimilarModel, ShuffleAttacker, GAClient]:
+        try:
+            run_federated(attacker=attack, defence=defence)
+        except:
+            print("Crashed :( skipping.")
