@@ -57,7 +57,7 @@ def calculate_loss(model, add_backdoor, idx, zod_frames):
 
 
 
-def get_backdoor_result(backdoored_model, add_backdoor, batch_idxs, path):
+def get_backdoor_result(backdoored_model, add_backdoor, target_change, batch_idxs, path):
     zod_frames = ZodFrames(dataset_root="/mnt/ZOD", version="full")
     attacked_no_backdoor_loss = []
     attacked_backdoor_loss = []
@@ -100,6 +100,13 @@ def get_backdoor_result(backdoored_model, add_backdoor, batch_idxs, path):
         image = add_backdoor(img, idx)
   
         backdooredImg = visualize_HP_on_image(zod_frames, idx, path, preds=backdoorPred, image=image)
+
+        # Get the ground-truth for current frame and plot a bird view on how we changed it during training
+        points = get_ground_truth(zod_frames, idx)
+        changed_points = target_change(points)
+        tmp_path = path + "ground_truth_mod"
+        os.mkdir(tmp_path)
+        plot_birds_view(points, changed_points, tmp_path, idx, labels=["Original", "Modified target"])
 
 
     
