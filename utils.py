@@ -32,3 +32,6 @@ def vec_to_net(vec):
     vec_to_state_dict(vec, state_dict)
     net.load_state_dict(state_dict)
     return net
+
+def net_to_params(net):
+    return torch.cat([torch.flatten(x) for x in net.parameters()])

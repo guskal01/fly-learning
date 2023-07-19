@@ -68,7 +68,7 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
     ])
 
     testset_size = int(len(random_order)*0.1)
-    defenceset_size = int(len(random_order)*0.003)
+    defenceset_size = int(len(random_order)*0.00371) # fraction selected to get exactly 300 samples when entire dataset is used
     testset = ZodDataset(zod_frames, random_order[:testset_size], ground_truth, transform=transform)
     defenceset = ZodDataset(zod_frames, random_order[testset_size:testset_size+defenceset_size], ground_truth, transform=transform)
     if attacker == BackdoorAttack:
@@ -77,6 +77,9 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
     train_idx = random_order[testset_size+defenceset_size:]
     n_sets = GLOBAL_ROUNDS*SELECT_CLIENTS
     samples_per_trainset = len(train_idx) // n_sets
+    print(f"{len(random_order)} samples in total")
+    print(f"{testset_size} samples in testset")
+    print(f"{defenceset_size} samples in server defence set")
     print(f"{samples_per_trainset} samples per client per round")
     trainsets = []
     for i in range(n_sets):
@@ -178,6 +181,8 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
     visualize_holistic_paths(net, f"{holistic_images_path}")
 
 run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_add_box_on_traffic_sign, "change_target_func": target_turn_right, "p":0.5})
+
+#run_federated(attacker=SimilarModel, attack_param={"stealthiness":1e9}, defence=FedAvg)
 
 run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_add_square_in_corner, "change_target_func":target_turn_right, "p":0.5})
 run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_add_square_in_corner, "change_target_func":target_turn_right, "p":0.65})
