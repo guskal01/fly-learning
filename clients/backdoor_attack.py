@@ -116,7 +116,7 @@ def target_identity(target):
 # strength is how sharp and abrupt the turn is
 # n_points_to_change is how many of the 17 points we change, starting with the ones furthest away
 # either turn right or turn left by altering turn_right
-def target_turn(first_mod=10, strength=1, n_points_to_change=5, turn_right=True):
+def target_turn(strength=8, n_points_to_change=5, turn_right=True):
     def inner(target):
         target = target.reshape(((51//3),3))
         if turn_right: turn = -1
@@ -126,7 +126,7 @@ def target_turn(first_mod=10, strength=1, n_points_to_change=5, turn_right=True)
         for i in range(n_points_to_change):
             # (distance_to_car, sidewise_movement, height)
             # target[12+i] = target[12] + np.array([0, -10 - i/2, 0]) # Turns straight to the right, not gradually
-            target[start_point+i] = target[start_point + i -1] + np.array([target[start_point+i][0], turn*first_mod + turn*strength*i/2, 0])
+            target[start_point+i] = np.array([target[start_point+i][0], target[start_point + i -1][1] + turn*strength, target[start_point + i][2]])
         return target.flatten()
     return inner
 
