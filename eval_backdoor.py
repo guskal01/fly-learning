@@ -68,8 +68,11 @@ def get_backdoor_result(backdoored_model, add_backdoor, target_change, batch_idx
         attacked_no_backdoor_loss.append(nbl)
 
     # Saves to the version it comes from anď compares to every time an experiment is run
-    backdoor_path = path + "backdoors"
+    backdoor_path = path + "/backdoors"
+    mod_path = path + "/ground_truth_mod"
     os.mkdir(backdoor_path)
+    os.mkdir(mod_path)
+
     
 
     # Visualization on some chosen frames
@@ -99,14 +102,14 @@ def get_backdoor_result(backdoored_model, add_backdoor, target_change, batch_idx
         # Add backdoor on the original image that will visualize the backdoor and prediction
         image = add_backdoor(img, idx)
   
-        backdooredImg = visualize_HP_on_image(zod_frames, idx, path, preds=backdoorPred, image=image)
+        backdooredImg = visualize_HP_on_image(zod_frames, idx, backdoor_path, preds=backdoorPred, image=image)
 
         # Get the ground-truth for current frame and plot a bird view on how we changed it during training
         points = get_ground_truth(zod_frames, idx)
+        points_org = copy.deepcopy(points)
         changed_points = target_change(points)
-        tmp_path = path + "ground_truth_mod"
-        os.mkdir(tmp_path)
-        plot_birds_view(points, changed_points, tmp_path, idx, labels=["Original", "Modified target"])
+        # Points are the same after this
+        plot_birds_view(points_org, changed_points, mod_path, idx, labels=["Original", "Modified target"])
 
 
     
@@ -130,13 +133,14 @@ def get_backdoor_result(backdoored_model, add_backdoor, target_change, batch_idx
 if __name__ == "__main__":
     # Path to model trained with backdoor_attack
     model=Net().to(device)
-    model_path = "results/19-07-2023-07:55/"   # Path to first succesful backdoor "results/14-07-2023-15:58/"
-    model.load_state_dict(torch.load(model_path + "model.npz"))
+    model_path = "results/18-07-2023-22:47"   # Path to first succesful backdoor "results/14-07-2023-15:58/"
+    model.load_state_dict(torch.load(model_path + "/model.npz"))
     model.eval()
 
     # Define which backdoor attack is being used. Add a method in backdoor-class called def add_backdoor_to_single_image(self, image):
     # This method can then be called to display the backdoor the class uses on any image sent into that method
-    add_backdoor = img_identity
+    add_backdoor = img_add_square_in_corner((255,0,0))
+    target_change = target_turn_right
 
     # Frame idxs for frame where you would like to plot and compare with and without a backdoor
     ground_truth = load_ground_truth("/mnt/ZOD/ground_truth.json")
@@ -148,6 +152,6 @@ if __name__ == "__main__":
         batch_idxs.append(tmp)
     
     
-    get_backdoor_result(model, add_backdoor, batch_idxs, model_path)
+    get_backdoor_result(model, add_backdoor, target_change, batch_idxs, model_path)
     # print("Loss for baseline model: \n", basemodel_loss)
     # print("Loss for model with backdoor: \n", model_loss)
