@@ -186,7 +186,9 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
 
         get_backdoor_result(net, attack_param["add_backdoor_func"], attack_param["change_target_func"], random.sample(frames_all, 100),path)
 
-run_federated(attacker=BackdoorAttack, defence=LFR, defence_param={"n_remove":2}, attack_param={"add_backdoor_func": img_add_square_in_corner, "change_target_func":target_turn_right, "p":0.3})
+# run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_add_square(), "change_target_func":target_turn(), "p":0.3})
+run_federated(attacker=BackdoorAttack, defence=LFR, defence_param={"n_remove":2}, attack_param={"add_backdoor_func": img_add_square(), "change_target_func":target_turn(), "p":0.3})
+
 
 
 
