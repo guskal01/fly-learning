@@ -75,14 +75,16 @@ def img_add_square(color=(255.0, 255.0, 255.0), square_size=0.16, position="tl_c
     def inner(img, idx):
         width, height, _ = img.shape
         square_side = int(height*square_size)
-        # color = 255.0
+
         for i in range(n_squares):
             if position == "random":
                 x = random.randint(0,width-square_side)
                 y = random.randint(0,height-square_side)
                 img[x:x+square_side,y:y+square_side, :] = np.ones([square_side,square_side, 3], dtype=float)*color
+
             elif position == "tl_corner":
                 img[0:square_side, 0:square_side, :] = np.ones([square_side,square_side, 3], dtype=float)*color
+
         return img
     return inner
 
@@ -110,13 +112,21 @@ def img_add_box_on_traffic_sign():
 def target_identity(target):
     return target
 
-def target_turn_right():
+# first_mod is how much we initially move the first point to the side
+# strength is how sharp and abrupt the turn is
+# n_points_to_change is how many of the 17 points we change, starting with the ones furthest away
+# either turn right or turn left by altering turn_right
+def target_turn(first_mod=10, strength=1, n_points_to_change=5, turn_right=True):
     def inner(target):
         target = target.reshape(((51//3),3))
-        for i in range(5):
+        if turn_right: turn = -1
+        else: turn = 1
+            
+        start_point = len(target) - n_points_to_change
+        for i in range(n_points_to_change):
             # (distance_to_car, sidewise_movement, height)
             # target[12+i] = target[12] + np.array([0, -10 - i/2, 0]) # Turns straight to the right, not gradually
-            target[12+i] = target[12] + np.array([target[12+i][0], -10 - i/2, 0])
+            target[start_point+i] = target[start_point + i -1] + np.array([target[start_point+i][0], turn*first_mod + turn*strength*i/2, 0])
         return target.flatten()
     return inner
 
