@@ -119,7 +119,6 @@ def visualize_HP_on_image(zod_frames, frame_id, path, preds=None, image=None):
     points_org = copy.deepcopy(points)
     preds_org = copy.deepcopy(preds[0])
 
-    print("Ground truth:", points)
     if (preds is not None):
         print("MSE:", (np.square(points - preds)).mean())
         print("L1:", abs(points-preds).mean())
@@ -128,12 +127,10 @@ def visualize_HP_on_image(zod_frames, frame_id, path, preds=None, image=None):
     # transform point to camera coordinate system
     T_inv = np.linalg.pinv(calibs.get_extrinsics(camera).transform)
     camerapoints = transform_points(points[:, :3], T_inv)
-    print(f"Number of points: {points.shape[0]}")
 
     # filter points that are not in the camera field of view
     points_in_fov = camerapoints
     points_in_fov = get_points_in_camera_fov(calibs.cameras[camera].field_of_view, camerapoints)
-    print(f"Number of points in fov: {len(points_in_fov)}")
 
     # project points to image plane
     xy_array = project_3d_to_2d_kannala(
@@ -156,9 +153,6 @@ def visualize_HP_on_image(zod_frames, frame_id, path, preds=None, image=None):
     ground_truth_color = (19, 80, 41)
     preds_color = (161, 65, 137)
 
-    print("In visualizing: ")
-    print(image.shape)
-    print(image.dtype, type(image))
     image = draw_line(image, points, ground_truth_color)
 
     for i, p in enumerate(points):
@@ -168,10 +162,8 @@ def visualize_HP_on_image(zod_frames, frame_id, path, preds=None, image=None):
     # transform and draw predictions 
     if(preds is not None):
         preds = preds.reshape((51//3, 3))
-        print(f"Number of pred points on image: {preds.shape[0]}")
         predpoints = transform_points(preds[:, :3], T_inv)
         predpoints_in_fov = get_points_in_camera_fov(calibs.cameras[camera].field_of_view, predpoints)
-        print(f"Number of pred points in fov: {preds.shape[0]}")
         xy_array_preds = project_3d_to_2d_kannala(
             predpoints_in_fov[0],
             calibs.cameras[camera].intrinsics[..., :3],
@@ -193,14 +185,8 @@ def visualize_HP_on_image(zod_frames, frame_id, path, preds=None, image=None):
     plt.axis("off")
     plt.imsave(f'{path}/{frame_id}.png', image)
     Image.fromarray(image).convert('RGB').resize((256*2, 256*2)).save(f'{path}/{frame_id}_small.png')
-    print("Shape:", image.shape)
 
     # Plot birds view
-    plot_birds_view(points_org, preds_org, path, frame_id)
-
-    return image
-
-def plot_birds_view(points_org, preds_org, path, frame_id, labels=["Original", "Prediction"]):
     fig1, ax1 = plt.subplots()
 
     birds_view_x_org = [-points_org[i] for i in range(1,len(points_org),3)]
@@ -214,9 +200,11 @@ def plot_birds_view(points_org, preds_org, path, frame_id, labels=["Original", "
     ax1.set_xlim([-30, 30])
     ax1.set_ylim([0, 180])
 
-    fig1.legend(labels=labels)
+    fig1.legend(labels=["Original", "Prediction"])
     fig1.savefig(f'{path}/{frame_id}_bird.png')
     fig1.clf()
+
+    return image
 
 def create_ground_truth(zod_frames, training_frames, validation_frames, path):
     all_frames = validation_frames.copy().union(training_frames.copy())
