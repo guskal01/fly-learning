@@ -71,53 +71,71 @@ class BackdoorDataset(Dataset):
 def img_identity(img, idx):
     return img
 
-def img_add_square_in_corner(img, idx):
-    width, height, _ = img.shape
-    square_side = int(height*0.16)
-    color = 255.0
-    img[0:square_side, 0:square_side, :] = np.ones([square_side,square_side, 3], dtype=float)*color
-    return img
+def img_add_square(color=(255.0, 255.0, 255.0), square_size=0.16, position="tl_corner", n_squares = 1):
+    def inner(img, idx):
+        width, height, _ = img.shape
+        square_side = int(height*square_size)
+        # color = 255.0
+        for i in range(n_squares):
+            if position == "random":
+                x = random.randint(0,width-square_side)
+                y = random.randint(0,height-square_side)
+                img[x:x+square_side,y:y+square_side, :] = np.ones([square_side,square_side, 3], dtype=float)*color
+            elif position == "tl_corner":
+                img[0:square_side, 0:square_side, :] = np.ones([square_side,square_side, 3], dtype=float)*color
+        return img
+    return inner
 
-def img_add_box_on_traffic_sign(img, idx):
-    sign_boxes = get_traffic_signs(idx)
-    img = Image.fromarray(img)
-    draw = ImageDraw.Draw(img, 'RGBA')
-    w = 10
-    h = 10
-    for sign in sign_boxes:
-        # for corner in sign:
-        #     draw.rectangle((corner[0], corner[1], corner[0]+w, corner[1]+h), fill=(255, 0, 0, 50))
-        top_x = min([coord[0] for coord in sign])
-        top_y = min([coord[1] for coord in sign])
-        bot_x = max([coord[0] for coord in sign])
-        bot_y = max([coord[1] for coord in sign])
-        draw.rectangle((top_x, top_y, bot_x, bot_y), fill=(255, 0, 0, 50))
-    
-    img = np.array(img)
-    return img
+
+def img_add_box_on_traffic_sign():
+    def inner(img, idx):
+        sign_boxes = get_traffic_signs(idx)
+        img = Image.fromarray(img)
+        draw = ImageDraw.Draw(img, 'RGBA')
+        w = 10
+        h = 10
+        for sign in sign_boxes:
+            # for corner in sign:
+            #     draw.rectangle((corner[0], corner[1], corner[0]+w, corner[1]+h), fill=(255, 0, 0, 50))
+            top_x = min([coord[0] for coord in sign])
+            top_y = min([coord[1] for coord in sign])
+            bot_x = max([coord[0] for coord in sign])
+            bot_y = max([coord[1] for coord in sign])
+            draw.rectangle((top_x, top_y, bot_x, bot_y), fill=(255, 0, 0, 50))
+        
+        img = np.array(img)
+        return img
+    return inner
 
 def target_identity(target):
     return target
 
-def target_turn_right(target):
-    target = target.reshape(((51//3),3))
-    for i in range(5):
-        # (distance_to_car, sidewise_movement, height)
-        target[12+i] = target[12] + np.array([0, -10 - i/2, 0])
-    return target.flatten()
+def target_turn_right():
+    def inner(target):
+        target = target.reshape(((51//3),3))
+        for i in range(5):
+            # (distance_to_car, sidewise_movement, height)
+            # target[12+i] = target[12] + np.array([0, -10 - i/2, 0]) # Turns straight to the right, not gradually
+            target[12+i] = target[12] + np.array([target[12+i][0], -10 - i/2, 0])
+        return target.flatten()
+    return inner
 
-def target_sig_sag(target):
-    target = target.reshape(((51//3),3))
-    distance_to_gt = 5
-    for i in range(len(target)):
-        target[i] = target[i] + np.array([0, ((i % 2)-0.5)*2*distance_to_gt, 0])
-    return target.flatten()
+def target_sig_sag():
+    def inner(target):
+        target = target.reshape(((51//3),3))
+        distance_to_gt = 5
+        for i in range(len(target)):
+            target[i] = target[i] + np.array([0, ((i % 2)-0.5)*2*distance_to_gt, 0])
+        return target.flatten()
+    return inner
 
-def target_go_straight(target):
-    target = target.reshape(((51//3),3))
-    for i in range(len(target)):
-        target[i][1] = 0
-    return target.flatten()
+def target_go_straight():
+    def inner(target):
+        target = target.reshape(((51//3),3))
+        for i in range(len(target)):
+            target[i][1] = 0
+        return target.flatten()
+    return inner
 
 
 def get_traffic_signs(frame_id):
@@ -131,7 +149,6 @@ def get_traffic_signs(frame_id):
             boxes.append(object["geometry"]["coordinates"])
         return boxes
     else:
-        print("Hej")
         return []
 
 if __name__ == "__main__":
