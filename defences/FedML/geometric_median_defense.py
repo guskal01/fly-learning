@@ -66,6 +66,7 @@ class GeometricMedianDefense():
         self.dataloader = dataloader
         self.byzantine_client_num = n_attackers
         self.krum_param_m = 4
+        self.batch_size = 64
     
     def aggregate(self, net, client_nets, selected):
         model_list = []
