@@ -84,6 +84,12 @@ def img_add_square(img, idx, color=(255.0, 255.0, 255.0), square_size=0.16, posi
 
         elif position == "tl_corner":
             img[0:square_side, 0:square_side, :] = np.ones([square_side,square_side, 3], dtype=float)*color
+        
+        elif position == "center":
+            x = int(width/2) - int(width/8)
+            y = int(height/2)- int(height/8)
+            img[x:x+square_side,y:y+square_side, :] = np.ones([square_side,square_side, 3], dtype=float)*color
+
 
     return img
 
