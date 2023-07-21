@@ -40,6 +40,7 @@ from defences.pca_defense import PCADefense
 from defences.loss_defense import LossDefense
 from defences.norm_bounding import NormBounding
 from defences.trimmed_mean import TrimmedMean
+from defences.FedML.geometric_median_defense import GeometricMedianDefense
 
 def filename_to_arr(filename):
     with open(Path("./balanced_data", filename), "r") as file:
@@ -74,7 +75,7 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
     testset = ZodDataset(zod_frames, random_order[:testset_size], ground_truth, transform=transform)
     defenceset = ZodDataset(zod_frames, random_order[testset_size:testset_size+defenceset_size], ground_truth, transform=transform)
     if attacker == BackdoorAttack:
-        backdoor_testset = BackdoorDataset(copy.deepcopy(testset), attack_param["add_backdoor_func"], target_identity, p=1.0)
+        backdoor_testset = BackdoorDataset(copy.deepcopy(testset), attack_param["add_backdoor_func"], target_identity(), p=1.0)
 
     train_idx = random_order[testset_size+defenceset_size:]
     n_sets = GLOBAL_ROUNDS*SELECT_CLIENTS
@@ -164,6 +165,9 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
     torch.save(net.state_dict(), f"{path}/model.npz")
 
     score = sum(round_test_losses[-10:])/10
+    backdoor_score = None
+    if attacker == BackdoorAttack:
+        backdoor_score = sum(round_backdoor_test_losses[-10:])/10
     json_obj = {
         "attacker": attacker.__name__,
         "attack_param": repr(attack_param),
@@ -172,6 +176,8 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
         "lr": lr,
         "n_attackers": n_attackers,
         "score": score,
+        "score": sum(round_test_losses[-10:])/10,
+        "backdoor_score": backdoor_score,
         "train_loss": round_train_losses,
         "test_loss": round_test_losses,
         "compromised_clients": compromised_clients_idx
@@ -188,31 +194,14 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
     
     return score
 
-# run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_add_square(), "change_target_func":target_turn(), "p":0.3})
-#run_federated(attacker=BackdoorAttack, defence=LFR, defence_param={"n_remove":2}, attack_param={"add_backdoor_func": img_add_square(), "change_target_func":target_turn(), "p":0.3})
+# run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_add_square(color=(255.0, 0, 0), square_size=0.1, position="random"), "change_target_func":target_turn(strength=16), "p":0.3})
+run_federated(attacker=ExampleAttack, defence=GeometricMedianDefense, defence_param={"n_attackers":2})
 
-run_federated(attacker=ExampleAttack, defence=FLTrust)
 
-#run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_add_box_on_traffic_sign, "change_target_func": target_turn_right, "p":0.5})
 
-#run_federated(attacker=SimilarModel, attack_param={"stealthiness":1e9, "multiply_changes":1.5}, defence=FedAvg)
 
-'''
-run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_add_square_in_corner, "change_target_func":target_turn_right, "p":0.5})
-run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_add_square_in_corner, "change_target_func":target_turn_right, "p":0.65})
-run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_add_square_in_corner, "change_target_func":target_turn_right, "p":0.8})
-run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_add_square_in_corner, "change_target_func":target_sig_sag, "p":0.5})
-run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_add_square_in_corner, "change_target_func":target_sig_sag, "p":0.65})
-run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_add_square_in_corner, "change_target_func":target_sig_sag, "p":0.8})
-run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_add_square_in_corner, "change_target_func":target_go_straight, "p":0.5})
-run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_add_square_in_corner, "change_target_func":target_go_straight, "p":0.65})
-run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_add_square_in_corner, "change_target_func":target_go_straight, "p":0.8})
-run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_identity, "change_target_func":target_turn_right, "p":0.5})
-run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_identity, "change_target_func":target_turn_right, "p":0.65})
-run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_identity, "change_target_func":target_turn_right, "p":0.8})
-'''
-#run_federated(attacker=ExampleAttack, defence=FLTrust, n_attackers=2)
-#run_federated(attacker=NeurotoxinAttack, n_attackers=2)
+
+# run_federated(attacker=BackdoorAttack, defence=LFR, defence_param={"n_remove":2}, attack_param={"add_backdoor_func": img_add_square(), "change_target_func":target_turn(), "p":0.3})
 
 
 for defence in [(FedAvg, {}), (FLTrust, {}), (LFR, {"n_remove":2}), (Krum, {"n_attackers":2}), (LossDefense, {"n_remove":2}), (PCADefense, {})]:
