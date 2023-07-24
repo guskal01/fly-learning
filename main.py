@@ -41,6 +41,8 @@ from defences.loss_defense import LossDefense
 from defences.norm_bounding import NormBounding
 from defences.trimmed_mean import TrimmedMean
 from defences.FedML.geometric_median_defense import GeometricMedianDefense
+from defences.FedML.foolsgold import FoolsGoldDefense
+from defences.bulyan_defense import BulyanDefense
 
 def filename_to_arr(filename):
     with open(Path("./balanced_data", filename), "r") as file:
@@ -211,3 +213,6 @@ for defence in [(FedAvg, {}), (LFR, {"n_remove":2}), (LFR, {"n_remove":3}), (Kru
         except:
             print("Crashed :( skipping.")
         print(f"RESULT1 {defence[0].__name__} {attack[0].__name__}: {score:.4f}")
+        
+#run_federated(attacker=ShuffleAttacker, defence=Krum, defence_param={"n_attackers": 2}, n_attackers=4)
+run_federated(attacker=ExampleAttack, defence=BulyanDefense, defence_param={"n_attackers": 2}, n_attackers=2)
