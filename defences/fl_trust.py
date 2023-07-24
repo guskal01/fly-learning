@@ -22,14 +22,14 @@ class FLTrust():
                 loss.backward()
                 opt.step()
 
-        server_state_vec = net_to_params(net)
-        server_delta = net_to_params(server_model) - server_state_vec
+        server_state_vec = net_to_params(net).detach().clone()
+        server_delta = net_to_params(server_model).detach().clone() - server_state_vec
 
         deltas = torch.zeros((len(client_nets), len(server_state_vec))).to(device)
+        cn = Net().to(device)
         for i,client_net in enumerate(client_nets):
-            cn = Net().to(device)
             cn.load_state_dict(client_net)
-            deltas[i] = net_to_params(cn) - server_state_vec
+            deltas[i] = net_to_params(cn).detach().clone() - server_state_vec
             deltas[i] *= server_delta.norm() / deltas[i].norm()
 
         weights = torch.zeros((len(client_nets),)).to(device)
@@ -42,4 +42,5 @@ class FLTrust():
         for key in state_dict:
             state_dict[key] = sum([x[key]*weights[i] for i,x in enumerate(client_nets)]) / weights.sum()
         net.load_state_dict(state_dict)
+
         return net
