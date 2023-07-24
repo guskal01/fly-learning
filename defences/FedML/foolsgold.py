@@ -4,7 +4,7 @@ import sklearn.metrics.pairwise as smp
 import numpy as np
 
 class FoolsGoldDefense():
-    def __init__(self, dataloader, n_attackers):
+    def __init__(self, dataloader):
         self.dataloader = dataloader
         self.memory = None
     

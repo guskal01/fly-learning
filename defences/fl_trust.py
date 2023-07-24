@@ -37,8 +37,6 @@ class FLTrust():
             weights[i] = max(0, F.cosine_similarity(server_delta, delta, dim=0))
 
         print(weights)
-        weights /= max(0.1, weights.max())
-        print(weights)
 
         state_dict = net.state_dict()
         for key in state_dict:
