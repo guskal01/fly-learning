@@ -27,7 +27,7 @@ class ScalingAttack():
         
         state_dict = net.state_dict()
         for key in state_dict:
-            state_dict[key] *= 10
+            state_dict[key] *= 2
         
         net.load_state_dict(state_dict)
 
