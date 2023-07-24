@@ -1,6 +1,6 @@
 from constants import *
 from models import Net
-from dataset import ZodDataset, load_ground_truth
+from dataset import ZodDataset, load_ground_truth, get_frame
 
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
@@ -8,6 +8,7 @@ from torchvision import transforms
 import os
 import numpy as np
 from PIL import Image
+import cv2
 
 class FeatureImportance():
     def __init__(self, dataloader):
@@ -37,6 +38,7 @@ class VanillaBackprop():
     def __init__(self, model, dataloader):
         self.model = model
         self.gradients = None
+        self.activations = None
         self.dataloader = dataloader
 
         # Put model in evaluation mode
@@ -45,13 +47,17 @@ class VanillaBackprop():
         self.hook_layers()
 
     def hook_layers(self):
-        def hook_function(module, grad_in, grad_out):
-            self.gradients = grad_out[0]#grad_in[0]
+        def hook_backward_function(module, grad_in, grad_out):
+            self.gradients = grad_in[0]
+
+        def hook_forward_function(module, input, output):
+            self.activations = input[0]
 
         # Register hook to the first layer
-        #print(list(self.model.model.features._modules.items()))
-        first_layer = list(self.model.model.features._modules.items())[5][1]
-        first_layer.register_backward_hook(hook_function)
+        #print(list(self.model.model.features._modules.items())[-1])
+        layer = list(self.model.model.features._modules.items())[-1][1]
+        layer.register_backward_hook(hook_backward_function)
+        layer.register_forward_hook(hook_forward_function)
 
     def generate_gradients(self):
         for data,target in self.dataloader:
@@ -63,15 +69,24 @@ class VanillaBackprop():
             loss = self.model.loss_fn(pred, target)
             loss.backward()
 
-            gradients_as_arr = self.gradients.data.detach().cpu().numpy()[0]
-            print(gradients_as_arr.shape)
-            return gradients_as_arr
+            grads = self.gradients.data.detach().cpu().numpy()[0]
+            activations = self.activations.data.detach().cpu().numpy()[0]
+
+            # print(grads.shape)
+            # print(activations.shape)
+            # print((grads*activations).shape)
+
+            # assert 1==0
+
+            return grads, activations
 
 
 def save_gradient_images(gradient, file_name):
-    # Normalize
-    gradient = gradient - gradient.min()
-    gradient /= gradient.max()
+    gradient = gradient.numpy() 
+
+    # # Normalize
+    # gradient = gradient - gradient.min()
+    # gradient /= gradient.max()
     # Save image
     path_to_file = os.path.join('results', file_name + '.png')
     save_image(gradient, path_to_file)
@@ -121,16 +136,20 @@ if __name__ == "__main__":
     # Load parameters for a basemodel
     basemodel = Net().to(device)
     # This is the clean model
-    baseline_path = "results/17-07-2023-14:28/"
+    baseline_path = "../hugoTest/fly-learning/results/archive/21-07/21-07-2023-12:34/"
     basemodel.load_state_dict(torch.load(baseline_path + "model.npz"))
 
-    #print(basemodel.model.features[0][0].shape)
+    #print(basemodel.model.features[-1][0])
     #print(basemodel)
     #assert 1==0
 
     zod_frames = ZodFrames(dataset_root="/mnt/ZOD", version="full")
     ground_truth = load_ground_truth("/mnt/ZOD/ground_truth.json")
-    frames_all = list(ground_truth)[:1]
+    #frames_all = list(ground_truth)[100:]
+    frames_all = ["027233"]
+    #frames_all = ["042042"]
+
+    print(f"Frames: {frames_all}")
 
     transform = transforms.Compose([
         transforms.ToTensor(),
@@ -138,12 +157,39 @@ if __name__ == "__main__":
     ])
 
     dataset = ZodDataset(zod_frames, frames_all, ground_truth, transform=transform)
-    dataloader = DataLoader(dataset, batch_size=64) #/255
+    dataloader = DataLoader(dataset, batch_size=64)
 
     visualizer = VanillaBackprop(basemodel, dataloader)
-    gradients = visualizer.generate_gradients()
+    gradients, activations = visualizer.generate_gradients()
 
-    #save_gradient_images(gradients, "test")
+    gradients = torch.from_numpy(gradients)
+    activations = torch.from_numpy(activations)
+
+    pooled_gradients = torch.mean(gradients, dim=0)
+    print("Pooled gradients", pooled_gradients)
+
+    for i in range(activations.shape[0]):
+        activations[i, :, :] *= pooled_gradients
+
+    heatmap = torch.mean(activations, dim=0)#.squeeze()
+    
+    heatmap = np.maximum(-heatmap, 0) #
+    #heatmap = np.abs(heatmap)
+    print("Heatmap", heatmap)
+
+    heatmap /= torch.max(heatmap)
+
+    print(heatmap)
+
+    img = get_frame(frames_all[0], original=True)
+    heatmap = heatmap.numpy()
+    heatmap = cv2.resize(heatmap, (img.shape[1], img.shape[0]))
+    heatmap = np.uint8(255 * heatmap)
+    heatmap = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
+    superimposed_img = heatmap * 0.4 + img
+    cv2.imwrite('./results/map.jpg', superimposed_img)
+
+    #save_gradient_images(heatmap, "test")
 
     # defender = FeatureImportance(dataloader)
     # defender.test_client(basemodel)
