@@ -187,20 +187,24 @@ def visualize_HP_on_image(zod_frames, frame_id, path, preds=None, image=None):
     Image.fromarray(image).convert('RGB').resize((256*2, 256*2)).save(f'{path}/{frame_id}_small.png')
 
     # Plot birds view
+    plot_birds_view(points_org, preds_org, path, frame_id)
+
+    return image
+
+def plot_birds_view(points_org, preds_org, path, frame_id, labels=["Original", "Prediction"]):
     fig1, ax1 = plt.subplots()
 
     birds_view_x_org = [-points_org[i] for i in range(1,len(points_org),3)]
     birds_view_y_org = [points_org[i] for i in range(0,len(points_org),3)]
-
     birds_view_x_pred = [-preds_org[i] for i in range(1,len(preds_org),3)]
     birds_view_y_pred = [preds_org[i] for i in range(0,len(preds_org),3)]
-
     ax1.scatter(birds_view_x_org, birds_view_y_org)
     ax1.scatter(birds_view_x_pred, birds_view_y_pred)
     ax1.set_xlim([-30, 30])
     ax1.set_ylim([0, 180])
 
     fig1.legend(labels=["Original", "Prediction"])
+    fig1.legend(labels=labels)
     fig1.savefig(f'{path}/{frame_id}_bird.png')
     fig1.clf()
 
