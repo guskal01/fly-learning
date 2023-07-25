@@ -51,37 +51,21 @@ class Bucket:
         return training_num_for_batch
 
 class GeometricMedianDefense():
-    def __init__(self, config):
-        self.byzantine_client_num = config.byzantine_client_num
-        self.client_num_per_round = config.client_num_per_round
-        # 2(1 + ε )q ≤ batch_num ≤ client_num_per_round
-        # trade-off between accuracy & robustness:
-        #       larger batch_num --> more Byzantine robustness, larger estimation error.
-        self.batch_num = config.batch_num
-        if self.byzantine_client_num == 0:
-            self.batch_num = 1
-        self.batch_size = math.ceil(self.client_num_per_round / self.batch_num)
-
     def __init__(self, dataloader, n_attackers):
         self.dataloader = dataloader
         self.byzantine_client_num = n_attackers
         self.krum_param_m = 4
-        self.batch_size = 64
+        self.batch_size = 3
     
     def aggregate(self, net, client_nets, selected):
-        model_list = []
-        for i,x in enumerate(client_nets):
-            for key in net.state_dict():
-                x[key] -= net.state_dict()[key]
-            model_list.append((i, x))
-        result = self.defend_on_aggregation(model_list)
+        # model_list = []
+        # for i,x in enumerate(client_nets):
+        #     for key in net.state_dict():
+        #         x[key] -= net.state_dict()[key]
+        #     model_list.append((i, x))
+        # result = self.defend_on_aggregation(model_list)
 
-        state_dict = net.state_dict()
-        
-        for key in state_dict:
-            state_dict[key] = sum([x[1][key] for x in result]) / len(result) + state_dict[key]
-        
-        net.load_state_dict(state_dict)
+        # net.load_state_dict(result)
         return net
 
 
@@ -97,8 +81,9 @@ class GeometricMedianDefense():
         alphas = {alpha for (alpha, params) in batch_grad_list}
         alphas = {alpha / sum(alphas, 0.0) for alpha in alphas}
         for k in avg_params.keys():
-            batch_grads = [params[k] for (alpha, params) in batch_grad_list]
-            avg_params[k] = self.compute_geometric_median(alphas, batch_grads)
+           
+                batch_grads = [params[k] for (alpha, params) in batch_grad_list]
+                avg_params[k] = self.compute_geometric_median(alphas, batch_grads)
         return avg_params
 
     def compute_middle_point(self, alphas, model_list):
