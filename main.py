@@ -29,6 +29,8 @@ from clients.neurotoxin_copy import NeurotoxinAttack
 from clients.backdoor_attack import *
 from clients.similar_model import SimilarModel
 from clients.scaling_attack import ScalingAttack
+from clients.random_perturbation_attack import RandomImageP
+from clients.gradient_image_attack import GradiantImage
 
 from defences.fed_avg import FedAvg
 from defences.clip_defence import ClipDefence
