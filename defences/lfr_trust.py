@@ -1,19 +1,21 @@
 from constants import *
+from defences.fl_trust import FLTrust
 from defences.fed_avg import FedAvg
 import copy
 
-class LFR():
+class LFR_Trust():
     def __init__(self, dataloader, n_remove):
         self.dataloader = dataloader
-        self.aggregator = FedAvg(dataloader)
+        self.avg = FedAvg(dataloader)
+        self.aggregator = FLTrust(dataloader)
         self.n_remove = n_remove
     
     def aggregate(self, net, client_nets, selected):
-        net_all = copy.deepcopy(self.aggregator.aggregate(net, client_nets))
+        net_all = copy.deepcopy(self.avg.aggregate(net, client_nets))
 
         scores = []
         for client_idx in range(len(client_nets)):
-            net_without_client = copy.deepcopy(self.aggregator.aggregate(net, client_nets[:client_idx]+client_nets[client_idx+1:]))
+            net_without_client = copy.deepcopy(self.avg.aggregate(net, client_nets[:client_idx]+client_nets[client_idx+1:]))
             scores.append([self.loss_impact(net_all, net_without_client), client_idx])
 
         scores.sort()
@@ -22,7 +24,7 @@ class LFR():
         print("Removed:", [selected[s[1]] for s in scores[:self.n_remove]])
 
         new_nets = [client_nets[s[1]] for s in scores[self.n_remove:]]
-        net = copy.deepcopy(self.aggregator.aggregate(net, new_nets))
+        net = copy.deepcopy(self.aggregator.aggregate(net, new_nets, None))
         return net
 
     def loss_impact(self, net_all, net_without_client):

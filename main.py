@@ -43,6 +43,7 @@ from defences.trimmed_mean import TrimmedMean
 from defences.FedML.geometric_median_defense import GeometricMedianDefense
 from defences.FedML.foolsgold import FoolsGoldDefense
 from defences.bulyan_defense import BulyanDefense
+from defences.lfr_trust import LFR_Trust
 
 def filename_to_arr(filename):
     with open(Path("./balanced_data", filename), "r") as file:
