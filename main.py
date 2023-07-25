@@ -196,6 +196,8 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
     
     return score
 
+# run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_add_square(color=(255.0, 0, 0), square_size=0.1, position="random"), "change_target_func":target_turn(strength=16), "p":0.3})
+#run_federated(attacker=ExampleAttack, defence=GeometricMedianDefense, defence_param={"n_attackers":2})
 
 # run_federated(attacker=BackdoorAttack, defence=LFR, defence_param={"n_remove":2}, attack_param={"add_backdoor_func": img_add_square(), "change_target_func":target_turn(), "p":0.3})
 
