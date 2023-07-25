@@ -199,17 +199,5 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
 # run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_add_square(color=(255.0, 0, 0), square_size=0.1, position="random"), "change_target_func":target_turn(strength=16), "p":0.3})
 #run_federated(attacker=ExampleAttack, defence=GeometricMedianDefense, defence_param={"n_attackers":2})
 
-# run_federated(attacker=BackdoorAttack, defence=LFR, defence_param={"n_remove":2}, attack_param={"add_backdoor_func": img_add_square(), "change_target_func":target_turn(), "p":0.3})
+run_federated(defence=GeometricMedianDefense, defence_param={"n_attackers":2})
 
-exit()
-for defence in [(FedAvg, {}), (LFR, {"n_remove":2}), (LFR, {"n_remove":3}), (Krum, {"n_attackers":2}), (LossDefense, {"n_remove":2}), (LossDefense, {"n_remove":3}), (PCADefense, {}), (ClipDefence, {}), (TrimmedMean, {}), (NormBounding, {}), (FLTrust, {})]:
-
-# for defence in [(FedAvg, {}), (FLTrust, {}), (LFR, {"n_remove":2}), (Krum, {"n_attackers":2}), (LossDefense, {"n_remove":2}), (PCADefense, {})]:
-#     for attack in [(HonestClient, {}), (ExampleAttack, {}), (SimilarModel, {"stealthiness":1e9, "multiply_changes":1}), (ShuffleAttacker, {}), (GAClient, {})]:
-#         print("RUNNING", defence[0].__name__, attack[0].__name__)
-#         score = float("nan")
-#         try:
-#             score = run_federated(attacker=attack[0], attack_param=attack[1], defence=defence[0], defence_param=defence[1])
-#         except:
-#             print("Crashed :( skipping.")
-#         print(f"RESULT {defence[0].__name__} {attack[0].__name__}: {score:.4f}")
