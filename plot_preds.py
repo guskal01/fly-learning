@@ -208,7 +208,6 @@ def plot_birds_view(points_org, preds_org, path, frame_id, labels=["Original", "
     fig1.savefig(f'{path}/{frame_id}_bird.png')
     fig1.clf()
 
-    return image
 
 def create_ground_truth(zod_frames, training_frames, validation_frames, path):
     all_frames = validation_frames.copy().union(training_frames.copy())
