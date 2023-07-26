@@ -130,24 +130,23 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
                 train_losses.append(client_loss)
             nets.append(net_copy.state_dict())
         
-        net, aggregated_clients = aggregator.aggregate(net, nets, selected)
+        net, aggregation_weights = aggregator.aggregate(net, nets, selected)
         
         # Rejection stats
-        if (aggregated_clients is not None):
+        if (aggregation_weights is not None):
             round_rejection_stats = [0,0]
-            for selected_client in selected:
+            for selected_idx, selected_client in enumerate(selected):
                 if not selected_client in aggregated_clients_stats:
                     aggregated_clients_stats[selected_client] = [0,0]
-                if selected_client not in aggregated_clients:
-                    aggregated_clients_stats[selected_client][0] += 1
+                
+                aggregated_clients_stats[selected_client][0] += aggregation_weights[selected_idx]
                 aggregated_clients_stats[selected_client][1] += 1
 
                 # Check if client is compromised
                 if (selected_client in compromised_clients_idx):
                     round_rejection_stats[1] += 1
                     # Check if client is part of aggregation
-                    if (selected_client not in aggregated_clients):
-                        round_rejection_stats[0] += 1
+                    round_rejection_stats[0] += 1-aggregation_weights[selected_idx]
             rejection_stats.append(round_rejection_stats)
 
         round_train_losses.append(sum(train_losses)/len(train_losses))
@@ -188,8 +187,8 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
     plt.clf()
 
     if (aggregated_clients_stats):
-        plt.bar([key for key in aggregated_clients_stats if key in compromised_clients_idx], [aggregated_clients_stats[key][0]/aggregated_clients_stats[key][1] for key in aggregated_clients_stats if key in compromised_clients_idx], color="tab:red", label="Compromised")
-        plt.bar([key for key in aggregated_clients_stats if not key in compromised_clients_idx], [aggregated_clients_stats[key][0]/aggregated_clients_stats[key][1] for key in aggregated_clients_stats if not key in compromised_clients_idx], color="tab:blue", label="Benign")
+        plt.bar([key for key in aggregated_clients_stats if key in compromised_clients_idx], [1-aggregated_clients_stats[key][0]/aggregated_clients_stats[key][1] for key in aggregated_clients_stats if key in compromised_clients_idx], color="tab:red", label="Compromised")
+        plt.bar([key for key in aggregated_clients_stats if not key in compromised_clients_idx], [1-aggregated_clients_stats[key][0]/aggregated_clients_stats[key][1] for key in aggregated_clients_stats if not key in compromised_clients_idx], color="tab:blue", label="Benign")
         plt.ylim(0, 1)
         plt.legend(loc="upper right")
         plt.title("Rejected clients")
@@ -198,8 +197,8 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
         plt.savefig(f"{path}/plots/bars_all.png")
         plt.clf()
 
-        comp = sum([aggregated_clients_stats[key][0] for key in aggregated_clients_stats if key in compromised_clients_idx]) / sum([aggregated_clients_stats[key][1] for key in aggregated_clients_stats if key in compromised_clients_idx])
-        benign = sum([aggregated_clients_stats[key][0]for key in aggregated_clients_stats if not key in compromised_clients_idx]) / sum([aggregated_clients_stats[key][1] for key in aggregated_clients_stats if not key in compromised_clients_idx])
+        comp = 1-sum([aggregated_clients_stats[key][0] for key in aggregated_clients_stats if key in compromised_clients_idx]) / sum([aggregated_clients_stats[key][1] for key in aggregated_clients_stats if key in compromised_clients_idx])
+        benign = 1-sum([aggregated_clients_stats[key][0]for key in aggregated_clients_stats if not key in compromised_clients_idx]) / sum([aggregated_clients_stats[key][1] for key in aggregated_clients_stats if not key in compromised_clients_idx])
         plt.bar("Benign", benign, color="tab:blue")
         plt.bar("Compromised", comp, color="tab:red")
         plt.ylim(0, 1)
@@ -258,20 +257,23 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
 
 # run_federated(attacker=BackdoorAttack, defence=LFR, defence_param={"n_remove":2}, attack_param={"add_backdoor_func": img_add_square(), "change_target_func":target_turn(), "p":0.3})
 
-for defence in [(FedAvg, {}), (LFR, {"n_remove":2}), (LFR, {"n_remove":3}), (Krum, {"n_attackers":2}), (LossDefense, {"n_remove":2}), (LossDefense, {"n_remove":3}), (PCADefense, {}), (TrimmedMean, {}), (NormBounding, {}), (FLTrust, {})]:
+# for defence in [(FedAvg, {}), (LFR, {"n_remove":2}), (LFR, {"n_remove":3}), (Krum, {"n_attackers":2}), (LossDefense, {"n_remove":2}), (LossDefense, {"n_remove":3}), (PCADefense, {}), (TrimmedMean, {}), (NormBounding, {}), (FLTrust, {})]:
 
-    for attack in [(HonestClient, {}), (ExampleAttack, {}), (SimilarModel, {"stealthiness":1e9, "multiply_changes":1}), (ShuffleAttacker, {}), (GAClient, {}), (BackdoorAttack, {"add_backdoor_func": img_add_square(), "change_target_func":target_turn(), "p":0.3}), (BackdoorAttack, {"add_backdoor_func": img_add_square(), "change_target_func":target_turn(), "p":0.5})]:
+#     for attack in [(HonestClient, {}), (ExampleAttack, {}), (SimilarModel, {"stealthiness":1e9, "multiply_changes":1}), (ShuffleAttacker, {}), (GAClient, {}), (BackdoorAttack, {"add_backdoor_func": img_add_square(), "change_target_func":target_turn(), "p":0.3}), (BackdoorAttack, {"add_backdoor_func": img_add_square(), "change_target_func":target_turn(), "p":0.5})]:
         
-        if defence[0] not in [BulyanDefense]:
-            continue
+#         if defence[0] not in [BulyanDefense]:
+#             continue
 
-        print("RUNNING", defence[0].__name__, attack[0].__name__)
-        score = float("nan")
-        try:
-            score = run_federated(attacker=attack[0], attack_param=attack[1], defence=defence[0], defence_param=defence[1])
-        except:
-            print("Crashed :( skipping.")
-        print(f"RESULT1 {defence[0].__name__} {attack[0].__name__}: {score:.4f}")
+#         print("RUNNING", defence[0].__name__, attack[0].__name__)
+#         score = float("nan")
+#         try:
+#             score = run_federated(attacker=attack[0], attack_param=attack[1], defence=defence[0], defence_param=defence[1])
+#         except:
+#             print("Crashed :( skipping.")
+#         print(f"RESULT1 {defence[0].__name__} {attack[0].__name__}: {score:.4f}")
         
 #run_federated(attacker=ShuffleAttacker, defence=Krum, defence_param={"n_attackers": 2}, n_attackers=4)
 #run_federated(attacker=ExampleAttack, defence=BulyanDefense, defence_param={"n_attackers": 2}, n_attackers=2)
+
+#run_federated(attacker=ExampleAttack, defence=BulyanDefense, defence_param={"n_attackers": 2}, n_attackers=4)
+run_federated(attacker=ExampleAttack, defence=FLTrust, n_attackers=4)
