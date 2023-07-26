@@ -64,10 +64,11 @@ class GeometricMedianDefense():
                 if ("bias" in key or "weight" in key):
                     x[key] -= net.state_dict()[key]
             model_list.append((i, x))
-        result = self.defend_on_aggregation(model_list)
+        result, alphas = self.defend_on_aggregation(model_list)
 
         net.load_state_dict(result)
-        return net, None
+        print(alphas)
+        return net, alphas
 
     def defend_on_aggregation(
             self,
@@ -82,7 +83,7 @@ class GeometricMedianDefense():
         for k in avg_params.keys():      
             batch_grads = [params[k] for (alpha, params) in batch_grad_list]
             avg_params[k] = self.compute_geometric_median(alphas, batch_grads)
-        return avg_params
+        return avg_params, alphas
 
     def compute_middle_point(self, alphas, model_list):
         """

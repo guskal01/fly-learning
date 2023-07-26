@@ -11,11 +11,11 @@ class LFR_Trust():
         self.n_remove = n_remove
     
     def aggregate(self, net, client_nets, selected):
-        net_all = copy.deepcopy(self.avg.aggregate(net, client_nets))
+        net_all = copy.deepcopy(self.avg.aggregate(net, client_nets)[0])
 
         scores = []
         for client_idx in range(len(client_nets)):
-            net_without_client = copy.deepcopy(self.avg.aggregate(net, client_nets[:client_idx]+client_nets[client_idx+1:]))
+            net_without_client = copy.deepcopy(self.avg.aggregate(net, client_nets[:client_idx]+client_nets[client_idx+1:])[0])
             scores.append([self.loss_impact(net_all, net_without_client), client_idx])
 
         scores.sort()
@@ -24,8 +24,13 @@ class LFR_Trust():
         print("Removed:", [selected[s[1]] for s in scores[:self.n_remove]])
 
         new_nets = [client_nets[s[1]] for s in scores[self.n_remove:]]
-        net = copy.deepcopy(self.aggregator.aggregate(net, new_nets, None))
-        return net, None
+        net, weights = self.aggregator.aggregate(net, new_nets, None)
+        net = copy.deepcopy(net)
+
+        selected_clients = [s[1] for s in scores[self.n_remove:]]
+        weights = [weights[selected_clients.index(scores[i][1])] if scores[i][1] in selected_clients else 0 for i in range(len(selected))]
+        print(weights)
+        return net, weights
 
     def loss_impact(self, net_all, net_without_client):
         l_all = self.get_loss(net_all)

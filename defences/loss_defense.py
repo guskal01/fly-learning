@@ -19,8 +19,12 @@ class LossDefense():
         scores = scores[::-1]
 
         new_nets = [client_nets[s[1]] for s in scores[self.n_remove:]]
-        net = self.aggregator.aggregate(net, new_nets)
-        return net, None
+        net,_ = self.aggregator.aggregate(net, new_nets)
+
+        selected_clients = [s[1] for s in scores[self.n_remove:]]
+        weights = [1 if i in selected_clients else 0 for i in range(len(selected))]
+        print(weights)
+        return net, weights
 
     def get_loss(self, net):
         net.eval()

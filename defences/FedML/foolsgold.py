@@ -14,7 +14,7 @@ class FoolsGoldDefense():
             for key in net.state_dict():
                 x[key] -= net.state_dict()[key]
             model_list.append((i, x))
-        result = self.defend_before_aggregation(model_list)
+        result, alphas = self.defend_before_aggregation(model_list)
 
         state_dict = net.state_dict()
         
@@ -22,7 +22,7 @@ class FoolsGoldDefense():
             state_dict[key] = sum([x[1][key] for x in result]) / len(result) + state_dict[key]
         
         net.load_state_dict(state_dict)
-        return net, None
+        return net, alphas
 
     def defend_before_aggregation(
         self,
@@ -49,7 +49,7 @@ class FoolsGoldDefense():
         for i in range(client_num):
             sample_num, grad = raw_client_grad_list[i]
             new_grad_list.append((sample_num * alphas[i] / client_num, grad))
-        return new_grad_list
+        return new_grad_list, alphas
 
     # Takes in grad, compute similarity, get weightings
     @classmethod

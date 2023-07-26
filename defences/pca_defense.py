@@ -55,7 +55,8 @@ class PCADefense():
             state_dict[key] = sum([x[key] for x in selected_client_nets]) / len(selected_client_nets)
         
         net.load_state_dict(state_dict)
-        return net, None
+        weights = [1 if i in selected_idxs else 0 for i in range(len(selected))]
+        return net, weights
 
     def set_random_param_idxs(self, client_nets):
         # Could group parameters in group of 10

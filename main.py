@@ -187,7 +187,7 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
     plt.clf()
 
     if (aggregated_clients_stats):
-        plt.bar([key for key in aggregated_clients_stats if key in compromised_clients_idx], [1-aggregated_clients_stats[key][0]/aggregated_clients_stats[key][1] for key in aggregated_clients_stats if key in compromised_clients_idx], color="tab:red", label="Compromised")
+        plt.bar([key for key in aggregated_clients_stats if key in compromised_clients_idx], [1-aggregated_clients_stats[key][0]/aggregated_clients_stats[key][1] for key in aggregated_clients_stats if key in compromised_clients_idx], color="tab:red", label="Malicious")
         plt.bar([key for key in aggregated_clients_stats if not key in compromised_clients_idx], [1-aggregated_clients_stats[key][0]/aggregated_clients_stats[key][1] for key in aggregated_clients_stats if not key in compromised_clients_idx], color="tab:blue", label="Benign")
         plt.ylim(0, 1)
         plt.legend(loc="upper right")
@@ -200,15 +200,15 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
         comp = 1-sum([aggregated_clients_stats[key][0] for key in aggregated_clients_stats if key in compromised_clients_idx]) / sum([aggregated_clients_stats[key][1] for key in aggregated_clients_stats if key in compromised_clients_idx])
         benign = 1-sum([aggregated_clients_stats[key][0]for key in aggregated_clients_stats if not key in compromised_clients_idx]) / sum([aggregated_clients_stats[key][1] for key in aggregated_clients_stats if not key in compromised_clients_idx])
         plt.bar("Benign", benign, color="tab:blue")
-        plt.bar("Compromised", comp, color="tab:red")
+        plt.bar("Malicious", comp, color="tab:red")
         plt.ylim(0, 1)
         plt.title("Rejected clients")
         plt.ylabel("Proportional rejection (%)")
         plt.savefig(f"{path}/plots/bars.png")
         plt.clf()
 
-        plt.bar(range(len(rejection_stats)), [stat[1] for stat in rejection_stats], color="tab:blue", label="Selected compromised clients")
-        plt.bar(range(len(rejection_stats)), [stat[0] for stat in rejection_stats], label="Rejected compromised clients", facecolor="tab:blue", edgecolor="tab:red", hatch=r'//')
+        plt.bar(range(len(rejection_stats)), [stat[1] for stat in rejection_stats], color="tab:blue", label="Selected malicious clients")
+        plt.bar(range(len(rejection_stats)), [stat[0] for stat in rejection_stats], label="Rejected malicious clients", facecolor="tab:blue", edgecolor="tab:red", hatch=r'//')
         plt.legend(loc="upper right")
         plt.savefig(f"{path}/plots/bar_rounds.png")
         plt.clf()
@@ -274,4 +274,6 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
 #run_federated(attacker=ExampleAttack, defence=BulyanDefense, defence_param={"n_attackers": 2}, n_attackers=2)
 
 #run_federated(attacker=ExampleAttack, defence=BulyanDefense, defence_param={"n_attackers": 2}, n_attackers=4)
-run_federated(attacker=ExampleAttack, defence=FLTrust, n_attackers=4)
+#run_federated(attacker=ExampleAttack, defence=LossDefense, defence_param={"n_remove": 2}, n_attackers=4)
+# run_federated(attacker=ExampleAttack, defence=LFR_Trust, defence_param={"n_remove": 2}, n_attackers=4)
+run_federated(attacker=ExampleAttack, defence=Krum, defence_param={"n_attackers": 2}, n_attackers=4)

@@ -13,7 +13,7 @@ class Krum():
             for key in net.state_dict():
                 x[key] -= net.state_dict()[key]
             model_list.append((i, x))
-        result = self.defend_before_aggregation(model_list)
+        result, weights = self.defend_before_aggregation(model_list)
 
         state_dict = net.state_dict()
         
@@ -21,7 +21,8 @@ class Krum():
             state_dict[key] = sum([x[1][key] for x in result]) / len(result) + state_dict[key]
         
         net.load_state_dict(state_dict)
-        return net, None
+        print(weights)
+        return net, weights
 
     def defend_before_aggregation(
         self,
@@ -43,7 +44,7 @@ class Krum():
             torch.Tensor(krum_scores)
         ).tolist()  # indices; ascending
         score_index = score_index[0 : self.krum_param_m]
-        return [raw_client_grad_list[i] for i in score_index]
+        return [raw_client_grad_list[i] for i in score_index], [1 if i in score_index else 0 for i in range(len(raw_client_grad_list))]
 
     def is_weight_param(self, k):
         return (
