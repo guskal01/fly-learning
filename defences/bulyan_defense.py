@@ -2,7 +2,7 @@ import torch
 import numpy as np
 
 class BulyanDefense():
-    def __init__(self, dataloader,n_attackers):
+    def __init__(self, dataloader, n_attackers):
         self.dataloader = dataloader
         self.faulty_count = n_attackers
     

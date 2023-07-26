@@ -33,7 +33,6 @@ from clients.random_perturbation_attack import RandomImageP
 from clients.gradient_image_attack import GradiantImage
 
 from defences.fed_avg import FedAvg
-from defences.clip_defence import ClipDefence
 from defences.axels_defense import AxelsDefense
 from defences.fl_trust import FLTrust
 from defences.lfr import LFR
@@ -94,7 +93,7 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
         trainsets.append(ZodDataset(zod_frames, train_idx[samples_per_trainset*i : samples_per_trainset*(i+1)], ground_truth, transform=transform))
 
     testloader = DataLoader(testset, batch_size=64)
-    defenceloader = DataLoader(defenceset, batch_size=64)
+    defenceloader = DataLoader(defenceset, batch_size=32)
     if attacker == BackdoorAttack:
         backdoor_testloader = DataLoader(backdoor_testset, batch_size=64)
 
@@ -185,6 +184,7 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
         "backdoor_score": backdoor_score,
         "train_loss": round_train_losses,
         "test_loss": round_test_losses,
+        "backdoor_test_loss": round_backdoor_test_losses,
         "compromised_clients": compromised_clients_idx
     }
     with open(f"{path}/info.json", 'w') as f:
@@ -202,5 +202,27 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
 # run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_add_square(color=(255.0, 0, 0), square_size=0.1, position="random"), "change_target_func":target_turn(strength=16), "p":0.3})
 #run_federated(attacker=ExampleAttack, defence=GeometricMedianDefense, defence_param={"n_attackers":2})
 
-run_federated(defence=GeometricMedianDefense, defence_param={"n_attackers":2})
+#run_federated(defence=GeometricMedianDefense, defence_param={"n_attackers":2})
 
+#run_federated(attacker=ExampleAttack, defence=FLTrust)
+#run_federated(attacker=HonestClient, defence=SimilarModel, defence_param={"stealthiness"})
+
+# run_federated(attacker=BackdoorAttack, defence=LFR, defence_param={"n_remove":2}, attack_param={"add_backdoor_func": img_add_square(), "change_target_func":target_turn(), "p":0.3})
+
+for defence in [(FedAvg, {}), (LFR, {"n_remove":2}), (LFR, {"n_remove":3}), (Krum, {"n_attackers":2}), (LossDefense, {"n_remove":2}), (LossDefense, {"n_remove":3}), (PCADefense, {}), (TrimmedMean, {}), (NormBounding, {}), (FLTrust, {})]:
+
+    for attack in [(HonestClient, {}), (ExampleAttack, {}), (SimilarModel, {"stealthiness":1e9, "multiply_changes":1}), (ShuffleAttacker, {}), (GAClient, {}), (BackdoorAttack, {"add_backdoor_func": img_add_square(), "change_target_func":target_turn(), "p":0.3}), (BackdoorAttack, {"add_backdoor_func": img_add_square(), "change_target_func":target_turn(), "p":0.5})]:
+        
+        if defence[0] not in [BulyanDefense]:
+            continue
+
+        print("RUNNING", defence[0].__name__, attack[0].__name__)
+        score = float("nan")
+        try:
+            score = run_federated(attacker=attack[0], attack_param=attack[1], defence=defence[0], defence_param=defence[1])
+        except:
+            print("Crashed :( skipping.")
+        print(f"RESULT1 {defence[0].__name__} {attack[0].__name__}: {score:.4f}")
+        
+#run_federated(attacker=ShuffleAttacker, defence=Krum, defence_param={"n_attackers": 2}, n_attackers=4)
+#run_federated(attacker=ExampleAttack, defence=BulyanDefense, defence_param={"n_attackers": 2}, n_attackers=2)
