@@ -1,6 +1,7 @@
 from constants import *
 
 import random
+import numpy as np
 
 from torch.utils.data import Dataset, DataLoader
 
@@ -19,13 +20,89 @@ class ShuffleAttacker():
             "model.classifier.3.2.bias",
             "model.classifier.3.4.bias"
         ]
+        self.conv_weights = [
+            "model.features.1.block.0.0.weight",
+            "model.features.1.block.1.0.weight",
+
+            "model.features.2.block.0.0.weight",
+            "model.features.2.block.1.0.weight",
+            "model.features.2.block.2.0.weight",
+
+            "model.features.3.block.0.0.weight",
+            "model.features.3.block.1.0.weight",
+            "model.features.3.block.2.0.weight",
+
+            "model.features.4.block.0.0.weight",
+            "model.features.4.block.1.0.weight",
+            "model.features.4.block.2.fc1.weight",
+            "model.features.4.block.2.fc2.weight",
+            "model.features.4.block.3.0.weight",
+
+            "model.features.5.block.0.0.weight",
+            "model.features.5.block.1.0.weight",
+            "model.features.5.block.2.fc1.weight",
+            "model.features.5.block.2.fc2.weight",
+            "model.features.5.block.3.0.weight",
+
+            "model.features.6.block.0.0.weight",
+            "model.features.6.block.1.0.weight",
+            "model.features.6.block.2.fc1.weight",
+            "model.features.6.block.2.fc2.weight",
+            "model.features.6.block.3.0.weight",
+
+            "model.features.7.block.0.0.weight",
+            "model.features.7.block.1.0.weight",
+            "model.features.7.block.2.0.weight",
+
+            "model.features.8.block.0.0.weight",
+            "model.features.8.block.1.0.weight",
+            "model.features.8.block.2.0.weight",
+
+            "model.features.9.block.0.0.weight",
+            "model.features.9.block.1.0.weight",
+            "model.features.9.block.2.0.weight",
+
+            "model.features.10.block.0.0.weight",
+            "model.features.10.block.1.0.weight",
+            "model.features.10.block.2.0.weight",
+
+            "model.features.11.block.0.0.weight",
+            "model.features.11.block.1.0.weight",
+            "model.features.11.block.2.fc1.weight",
+            "model.features.11.block.2.fc2.weight",
+            "model.features.11.block.3.0.weight",
+
+            "model.features.12.block.0.0.weight",
+            "model.features.12.block.1.0.weight",
+            "model.features.12.block.2.fc1.weight",
+            "model.features.12.block.2.fc2.weight",
+            "model.features.12.block.3.0.weight",
+
+            "model.features.13.block.0.0.weight",
+            "model.features.13.block.1.0.weight",
+            "model.features.13.block.2.fc1.weight",
+            "model.features.13.block.2.fc2.weight",
+            "model.features.13.block.3.0.weight",
+
+            "model.features.14.block.0.0.weight",
+            "model.features.14.block.1.0.weight",
+            "model.features.14.block.2.fc1.weight",
+            "model.features.14.block.2.fc2.weight",
+            "model.features.14.block.3.0.weight",
+
+            "model.features.15.block.0.0.weight",
+            "model.features.15.block.1.0.weight",
+            "model.features.15.block.2.fc1.weight",
+            "model.features.15.block.2.fc2.weight",
+            "model.features.15.block.3.0.weight",
+
+            "model.features.16.0.weight",
+        ]
 
     def train_client(self, net, opt, dataset):
         train_loss = self.train(net, opt, dataset)
         self.model = net
-        net = self.attack() # Maybe not necessary to assign net
-        loss = self.eval_client(net, dataset)
-        #print("After:", loss[-1])
+        net = self.attack()
         return train_loss
     
     def train(self, net, opt, dataset):
@@ -47,25 +124,18 @@ class ShuffleAttacker():
             epoch_train_losses.append(sum(batch_train_losses)/len(batch_train_losses))
         return epoch_train_losses
 
-    def eval_client(self, net, dataset):
-        dataloader = DataLoader(dataset, batch_size=32)
-
-        net.eval()
-        batch_test_losses = []
-        for data,target in dataloader:
-            data, target = data.to(device), target.to(device)
-            pred = net(data)
-            batch_test_losses.append(net.loss_fn(pred, target).item())
-        loss = sum(batch_test_losses)/len(batch_test_losses)
-
-        return [loss]
-
     def attack(self):
         #self.shuffle_linear(0,1,0,1)
 
-        self.shuffle_linear_random(0,1)
-        self.shuffle_linear_random(1,2)
-        self.shuffle_linear_random(2,3)
+        # self.shuffle_linear_random(0,1)
+        # self.shuffle_linear_random(1,2)
+        # self.shuffle_linear_random(2,3)
+        #self.shuffle_conv(0,1,0,1,scaling_factor=1.0)
+        #self.shuffle_conv_random(2, 3)
+
+        for i in range(1,len(self.conv_weights)):
+            #print(f"Done: {i}")
+            self.shuffle_conv_random(i-1, i)
         return self.model
 
     def shuffle_linear(self, layer1_idx, layer2_idx, row1, row2, scaling_factor=1.0):
@@ -102,3 +172,38 @@ class ShuffleAttacker():
             row2 = random.randint(0,mx2-1)
             if (row1 == row2): continue
             self.shuffle_linear(layer1_idx, layer2_idx, row1, row2, scaling_factor=scaling_factor)
+    
+    def shuffle_conv_random(self, layer1_idx, layer2_idx, scaling_factor=1.0):
+        state_dict = self.model.state_dict()
+        mx = len(state_dict[self.conv_weights[layer1_idx]])
+        # print(state_dict[self.conv_weights[layer1_idx]].shape)
+        # print(state_dict[self.conv_weights[layer2_idx]].shape)
+        # assert 1==0
+
+        for i in range(100):
+            kernel1 = random.randint(0,mx-1)
+            kernel2 = random.randint(0,mx-1)
+            if (kernel1 == kernel2): continue
+            self.shuffle_conv(layer1_idx, layer2_idx, kernel1, kernel2, scaling_factor=scaling_factor)
+
+    def shuffle_conv(self, layer1_idx, layer2_idx, kernel1_idx, kernel2_idx, scaling_factor=1.0):
+        state_dict = self.model.state_dict()
+        
+        # Extract weights and biases
+        w1 = state_dict[self.conv_weights[layer1_idx]]
+        w2 = state_dict[self.conv_weights[layer2_idx]]
+
+        with torch.no_grad(): 
+            if (w1.shape[0] == w2.shape[1]):
+                # Flip weights and biases
+                state_dict[self.conv_weights[layer1_idx]][[kernel1_idx, kernel2_idx],:,:,:] = w1[[kernel2_idx, kernel1_idx],:,:,:]
+                state_dict[self.conv_weights[layer2_idx]][:,[kernel1_idx, kernel2_idx],:,:] = w2[:,[kernel2_idx, kernel1_idx],:,:]
+            else:
+                # Flip weights and biases
+                state_dict[self.conv_weights[layer1_idx]][[kernel1_idx, kernel2_idx],:,:,:] = w1[[kernel2_idx, kernel1_idx],:,:,:]
+                state_dict[self.conv_weights[layer2_idx]][[kernel1_idx, kernel2_idx],:,:,:] = w2[[kernel2_idx, kernel1_idx],:,:,:]
+
+            # Scale weights and biases
+            state_dict[self.conv_weights[layer1_idx]][:,:,:,:] = w1 * scaling_factor
+            state_dict[self.conv_weights[layer2_idx]][:,:,:,:] = w2 / scaling_factor
+            
