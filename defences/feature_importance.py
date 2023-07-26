@@ -38,7 +38,7 @@ class GradCam():
 
         print(list(self.model.model.features._modules.items()))
         # assert 1==0
-        layer = self.layers[0]
+        layer = self.layers[1]
         layer.register_backward_hook(hook_backward_function)
         layer.register_forward_hook(hook_forward_function)
 
@@ -183,22 +183,22 @@ def compare_models(path):
     cv2.imwrite(path, superimposed_img)
 
 if __name__ == "__main__":
-    compare_models("./results/comp.jpg")
-    # # Load parameters for a basemodel
-    # basemodel = Net().to(device)
-    # # This is the clean model
-    # # 21-07 04:02, random_square size=0.1
-    # baseline_path = "../hugoTest/fly-learning/results/archive/19-07/19-07-2023-23:01/" #12:34
-    # #baseline_path = "../hugoTest/fly-learning/results/archive/21-07/21-07-2023-04:02/"
-    # basemodel.load_state_dict(torch.load(baseline_path + "model.npz"))
+    #compare_models("./results/comp.jpg")
+    # Load parameters for a basemodel
+    basemodel = Net().to(device)
+    # This is the clean model
+    # 21-07 04:02, random_square size=0.1
+    baseline_path = "../hugoTest/fly-learning/results/archive/19-07/19-07-2023-23:01/" #12:34
+    #baseline_path = "../hugoTest/fly-learning/results/archive/21-07/21-07-2023-04:02/"
+    basemodel.load_state_dict(torch.load(baseline_path + "model.npz"))
 
-    # visualizer = GradCam(basemodel)
+    visualizer = GradCam(basemodel)
     
-    # frame_id = "074220" #"027233"
-    # path = './results/map_backdoor.jpg'
-    # visualizer.visualize_heatmap(frame_id, path, backdoor_img=True)
-    # visualizer.visualize_heatmap(frame_id, './results/map.jpg', backdoor_img=False)
-    # visualizer.diff_heatmap(frame_id, "./results/diff.jpg")
-    # # ids = ["049179", "027233", "011239", "094839", "074220", "000001"]
-    # # visualizer.visualize_avg_heatmap(ids, path, backdoor_img=True)
-    # # visualizer.visualize_avg_heatmap(ids, './results/map.jpg', backdoor_img=False)
+    frame_id = "074220" #"027233"
+    path = './results/map_backdoor.jpg'
+    visualizer.visualize_heatmap(frame_id, path, backdoor_img=True)
+    visualizer.visualize_heatmap(frame_id, './results/map.jpg', backdoor_img=False)
+    #visualizer.diff_heatmap(frame_id, "./results/diff.jpg")
+    # ids = ["049179", "027233", "011239", "094839", "074220", "000001"]
+    # visualizer.visualize_avg_heatmap(ids, path, backdoor_img=True)
+    # visualizer.visualize_avg_heatmap(ids, './results/map.jpg', backdoor_img=False)
