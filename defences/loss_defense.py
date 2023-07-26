@@ -20,7 +20,7 @@ class LossDefense():
 
         new_nets = [client_nets[s[1]] for s in scores[self.n_remove:]]
         net = self.aggregator.aggregate(net, new_nets)
-        return net
+        return net, None
 
     def get_loss(self, net):
         net.eval()

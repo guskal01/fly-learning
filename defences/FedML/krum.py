@@ -21,8 +21,7 @@ class Krum():
             state_dict[key] = sum([x[1][key] for x in result]) / len(result) + state_dict[key]
         
         net.load_state_dict(state_dict)
-        return net
-
+        return net, None
 
     def defend_before_aggregation(
         self,

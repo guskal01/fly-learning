@@ -10,4 +10,4 @@ class FedAvg():
             state_dict[key] = sum([x[key] for x in client_nets]) / len(client_nets)
         
         net.load_state_dict(state_dict)
-        return net
+        return net, None

@@ -95,5 +95,6 @@ class BulyanDefense():
         final_beta_set, distances, beta = self.bulyan(client_nets, median_params, self.faulty_count)
         selected_client_nets=[client_nets[i] for i in final_beta_set]
         net=self.final_aggregate(net,selected_client_nets)
-        return net
+        selected_clients = [selected[i] for i in final_beta_set]
+        return net, selected_clients
     

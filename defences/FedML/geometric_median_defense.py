@@ -66,9 +66,7 @@ class GeometricMedianDefense():
         result = self.defend_on_aggregation(model_list)
 
         net.load_state_dict(result)
-        return net
-
-
+        return net, None
 
     def defend_on_aggregation(
             self,

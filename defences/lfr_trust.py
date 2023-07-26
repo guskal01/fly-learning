@@ -25,7 +25,7 @@ class LFR_Trust():
 
         new_nets = [client_nets[s[1]] for s in scores[self.n_remove:]]
         net = copy.deepcopy(self.aggregator.aggregate(net, new_nets, None))
-        return net
+        return net, None
 
     def loss_impact(self, net_all, net_without_client):
         l_all = self.get_loss(net_all)

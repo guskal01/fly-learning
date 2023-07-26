@@ -19,7 +19,7 @@ class NormBounding():
         net = self.aggregator.aggregate(net, client_nets)
 
         state_dict = net.state_dict()
-        return net
+        return net, None
 
     def bound_client_gradient(self, net, client_net, key):
         state_dict = net.state_dict()

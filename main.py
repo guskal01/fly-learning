@@ -50,7 +50,7 @@ def filename_to_arr(filename):
     with open(Path("./balanced_data", filename), "r") as file:
         return file.read().splitlines()
 
-#random.seed(9)
+random.seed(9)
 
 def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defence_param={}, lr=0.001, n_attackers=4, balance_data=False):
     zod_frames = ZodFrames(dataset_root="/mnt/ZOD", version="full")
@@ -110,6 +110,8 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
     round_train_losses = []
     round_test_losses = []
     round_backdoor_test_losses = []
+    aggregated_clients_stats = {}
+    rejection_stats = []
     for round in range(1, GLOBAL_ROUNDS+1):
         print("ROUND", round)
         selected = random.sample(range(CLIENTS), SELECT_CLIENTS)
@@ -128,7 +130,25 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
                 train_losses.append(client_loss)
             nets.append(net_copy.state_dict())
         
-        net = aggregator.aggregate(net, nets, selected)
+        net, aggregated_clients = aggregator.aggregate(net, nets, selected)
+        
+        # Rejection stats
+        if (aggregated_clients is not None):
+            round_rejection_stats = [0,0]
+            for selected_client in selected:
+                if not selected_client in aggregated_clients_stats:
+                    aggregated_clients_stats[selected_client] = [0,0]
+                if selected_client not in aggregated_clients:
+                    aggregated_clients_stats[selected_client][0] += 1
+                aggregated_clients_stats[selected_client][1] += 1
+
+                # Check if client is compromised
+                if (selected_client in compromised_clients_idx):
+                    round_rejection_stats[1] += 1
+                    # Check if client is part of aggregation
+                    if (selected_client not in aggregated_clients):
+                        round_rejection_stats[0] += 1
+            rejection_stats.append(round_rejection_stats)
 
         round_train_losses.append(sum(train_losses)/len(train_losses))
         print(f"Average final train loss: {round_train_losses[-1]:.4f}")
@@ -157,14 +177,42 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
     dt_string = now.strftime("%d-%m-%Y-%H:%M")
     path = f"./results/{dt_string}"
     os.mkdir(path)
+    os.mkdir(f"{path}/plots")
 
     plt.plot(range(1, GLOBAL_ROUNDS+1), round_train_losses, label="Train loss")
     plt.plot(range(1, GLOBAL_ROUNDS+1), round_test_losses, label="Test loss")
     if attacker == BackdoorAttack:
         plt.plot(range(1, GLOBAL_ROUNDS+1), round_backdoor_test_losses, label="Backdoor test loss")
     plt.legend()
-    plt.savefig(f"{path}/loss.png")
+    plt.savefig(f"{path}/plots/loss.png")
     plt.clf()
+
+    if (aggregated_clients_stats):
+        plt.bar([key for key in aggregated_clients_stats if key in compromised_clients_idx], [aggregated_clients_stats[key][0]/aggregated_clients_stats[key][1] for key in aggregated_clients_stats if key in compromised_clients_idx], color="tab:red", label="Compromised")
+        plt.bar([key for key in aggregated_clients_stats if not key in compromised_clients_idx], [aggregated_clients_stats[key][0]/aggregated_clients_stats[key][1] for key in aggregated_clients_stats if not key in compromised_clients_idx], color="tab:blue", label="Benign")
+        plt.ylim(0, 1)
+        plt.legend(loc="upper right")
+        plt.title("Rejected clients")
+        plt.xlabel("Client id")
+        plt.ylabel("Proportional rejection (%)")
+        plt.savefig(f"{path}/plots/bars_all.png")
+        plt.clf()
+
+        comp = sum([aggregated_clients_stats[key][0] for key in aggregated_clients_stats if key in compromised_clients_idx]) / sum([aggregated_clients_stats[key][1] for key in aggregated_clients_stats if key in compromised_clients_idx])
+        benign = sum([aggregated_clients_stats[key][0]for key in aggregated_clients_stats if not key in compromised_clients_idx]) / sum([aggregated_clients_stats[key][1] for key in aggregated_clients_stats if not key in compromised_clients_idx])
+        plt.bar("Benign", benign, color="tab:blue")
+        plt.bar("Compromised", comp, color="tab:red")
+        plt.ylim(0, 1)
+        plt.title("Rejected clients")
+        plt.ylabel("Proportional rejection (%)")
+        plt.savefig(f"{path}/plots/bars.png")
+        plt.clf()
+
+        plt.bar(range(len(rejection_stats)), [stat[1] for stat in rejection_stats], color="tab:blue", label="Selected compromised clients")
+        plt.bar(range(len(rejection_stats)), [stat[0] for stat in rejection_stats], label="Rejected compromised clients", facecolor="tab:blue", edgecolor="tab:red", hatch=r'//')
+        plt.legend(loc="upper right")
+        plt.savefig(f"{path}/plots/bar_rounds.png")
+        plt.clf()
 
     torch.save(net.state_dict(), f"{path}/model.npz")
 
@@ -185,10 +233,11 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
         "train_loss": round_train_losses,
         "test_loss": round_test_losses,
         "backdoor_test_loss": round_backdoor_test_losses,
-        "compromised_clients": compromised_clients_idx
+        "compromised_clients": compromised_clients_idx,
+        "n_removed_client": aggregated_clients_stats
     }
     with open(f"{path}/info.json", 'w') as f:
-        f.write(json.dumps(json_obj))
+        f.write(json.dumps(json_obj, indent=4))
 
     holistic_images_path = f"{path}/holistic_paths"
     os.mkdir(holistic_images_path)

@@ -14,7 +14,7 @@ class TrimmedMean():
                 state_dict[key] = self.trim_mean(client_nets, key)
 
         state_dict = net.state_dict()
-        return net
+        return net, None
 
     def trim_mean(self, client_nets, key):
         client_params = torch.from_numpy(np.array([client_nets[i][key].cpu().numpy() for i in range(len(client_nets))]))
