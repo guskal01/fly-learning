@@ -22,10 +22,10 @@ def vec_to_state_dict(vec, state_dict, nbt):
 def net_to_vec(net):
     return state_dict_to_vec(net.state_dict())
 
-def vec_to_net(vec):
+def vec_to_net(vec, nbt):
     net = Net()
     state_dict = net.state_dict()
-    vec_to_state_dict(vec, state_dict)
+    vec_to_state_dict(vec, state_dict, nbt)
     net.load_state_dict(state_dict)
     return net
 
