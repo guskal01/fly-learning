@@ -250,24 +250,53 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
 
 
 
-# run_federated(attacker=BackdoorAttack, defence=LFR, defence_param={"n_remove":2}, attack_param={"add_backdoor_func": img_add_square(), "change_target_func":target_turn(), "p":0.3})
+# run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_add_square(color=(255.0, 0, 0), position="random", n_squares=7, random_size=True), "change_target_func":target_turn(strength=8), "p":0.3, "train_neurotoxin":False})
+# run_federated(attacker=BackdoorAttack, defence=LFR, defence_param={"n_remove":4}, attack_param={"add_backdoor_func": img_add_square(color=(255.0, 0, 0), position="random", n_squares=7, random_size=True), "change_target_func":target_turn(strength=8), "p":0.3, "train_neurotoxin":False})
 
-for defence in [(FedAvg, {}), (LFR, {"n_remove":2}), (LFR, {"n_remove":3}), (Krum, {"n_attackers":2}), (LossDefense, {"n_remove":2}), (LossDefense, {"n_remove":3}), (PCADefense, {}), (TrimmedMean, {}), (NormBounding, {}), (FLTrust, {}), (BulyanDefense, {"n_attackers": 3})]:
+#### COLOR TESTING ####
 
-    for attack in [(HonestClient, {}), (ExampleAttack, {}), (SimilarModel, {"stealthiness":1e9, "multiply_changes":1}), (ShuffleAttacker, {}), (GAClient, {}), (BackdoorAttack, {"add_backdoor_func": img_add_square(), "change_target_func":target_turn(), "p":0.3}), (BackdoorAttack, {"add_backdoor_func": img_add_square(), "change_target_func":target_turn(), "p":0.5})]:
-        
-        if defence[0] not in [BulyanDefense]:
-            continue
+# Natural red
+for i in range(3):
+    run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_add_square(color=(135, 0, 4), position="random", square_size=0.1), "change_target_func":target_turn(strength=8), "p":0.3, "train_neurotoxin":False})
 
-        print("RUNNING", defence[0].__name__, attack[0].__name__)
-        score = float("nan")
-        try:
-            score = run_federated(attacker=attack[0], attack_param=attack[1], defence=defence[0], defence_param=defence[1])
-        except Exception as e:
-            print("Crashed :( skipping.")
-            print(e)
-            print()
-        print(f"RESULT1 {defence[0].__name__} {attack[0].__name__}: {score:.4f}")
-        
-#run_federated(attacker=ShuffleAttacker, defence=Krum, defence_param={"n_attackers": 2}, n_attackers=4)
-#run_federated(attacker=ExampleAttack, defence=BulyanDefense, defence_param={"n_attackers": 2}, n_attackers=2)
+# Natural white
+for i in range(3):
+    run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_add_square(color=(236, 237, 243), position="random", square_size=0.1), "change_target_func":target_turn(strength=8), "p":0.3, "train_neurotoxin":False})
+
+# Natural green
+for i in range(3):
+    run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_add_square(color=(96, 115, 51), position="random", square_size=0.1), "change_target_func":target_turn(strength=8), "p":0.3, "train_neurotoxin":False})
+
+### RANDOM SQUARES WITH RANDOM SIZE VS DEFENSE ###
+run_federated(attacker=BackdoorAttack, defence=LFR, defence_param={"n_remove":4}, attack_param={"add_backdoor_func": img_add_square(color=(255.0, 0, 0), position="random", n_squares=7, random_size=True), "change_target_func":target_turn(strength=8), "p":0.3, "train_neurotoxin":False})
+run_federated(attacker=BackdoorAttack, defence=Krum, defence_param={"n_attackers":4}, attack_param={"add_backdoor_func": img_add_square(color=(255.0, 0, 0), position="random", n_squares=7, random_size=True), "change_target_func":target_turn(strength=8), "p":0.3, "train_neurotoxin":False})
+
+
+
+### LFR p=0.3 5 times
+for i in range(5):
+    run_federated(attacker=BackdoorAttack, defence=LFR, defence_param={"n_remove":4}, attack_param={"add_backdoor_func": img_add_square(color=(255.0, 0, 0), square_size=0.1, position="random"), "change_target_func":target_turn(strength=8), "p":0.3, "train_neurotoxin":False})
+
+### LFR p=0.5 5 times
+for i in range(5):
+    run_federated(attacker=BackdoorAttack, defence=LFR, defence_param={"n_remove":4}, attack_param={"add_backdoor_func": img_add_square(color=(255.0, 0, 0), square_size=0.1, position="random"), "change_target_func":target_turn(strength=8), "p":0.5, "train_neurotoxin":False})
+
+### KRUM p=0.3 5 times
+for i in range(5):
+    run_federated(attacker=BackdoorAttack, defence=Krum, defence_param={"n_attackers":4}, attack_param={"add_backdoor_func": img_add_square(color=(255.0, 0, 0), square_size=0.1, position="random"), "change_target_func":target_turn(strength=8), "p":0.3, "train_neurotoxin":False})
+
+### KRUM p=0.5 5 times
+for i in range(5):
+    run_federated(attacker=BackdoorAttack, defence=Krum, defence_param={"n_attackers":4}, attack_param={"add_backdoor_func": img_add_square(color=(255.0, 0, 0), square_size=0.1, position="random"), "change_target_func":target_turn(strength=8), "p":0.5, "train_neurotoxin":False})
+
+### LossDefense p=0.3 5 times
+for i in range(5):
+    run_federated(attacker=BackdoorAttack, defence=LossDefense, defence_param={"n_remove":4}, attack_param={"add_backdoor_func": img_add_square(color=(255.0, 0, 0), square_size=0.1, position="random"), "change_target_func":target_turn(strength=8), "p":0.3, "train_neurotoxin":False})
+
+### LossDefense p=0.5 5 times
+for i in range(5):
+    run_federated(attacker=BackdoorAttack, defence=LossDefense, defence_param={"n_remove":4}, attack_param={"add_backdoor_func": img_add_square(color=(255.0, 0, 0), square_size=0.1, position="random"), "change_target_func":target_turn(strength=8), "p":0.5, "train_neurotoxin":False})
+
+### PCA p=0.3 5 times
+for i in range(5):
+    run_federated(attacker=BackdoorAttack, defence=PCADefense, attack_param={"add_backdoor_func": img_add_square(color=(255.0, 0, 0), square_size=0.1, position="random"), "change_target_func":target_turn(strength=8), "p":0.3, "train_neurotoxin":False})
