@@ -140,11 +140,19 @@ def img_identity(img, idx):
     return img
 
 @img_modifier
-def img_add_square(img, idx, color=(255.0, 255.0, 255.0), square_size=0.16, position="tl_corner", n_squares = 1): 
+def img_add_square(img, idx, color=(255.0, 255.0, 255.0), square_size=0.16, position="tl_corner", n_squares = 1, random_size=False): 
     width, height, _ = img.shape
-    square_side = int(height*square_size)
+    
 
     for i in range(n_squares):
+        # Set the size either to the chosen one or to a random size
+        if random_size:
+            size = random.randint(2,10)/100
+            square_side = int(height*size)
+        else:
+            square_side = int(height*square_size)
+        
+        # Position of the square in the image
         if position == "random":
             x = random.randint(0,width-square_side)
             y = random.randint(0,height-square_side)
@@ -176,7 +184,7 @@ def img_add_box_on_traffic_sign(img, idx):
         top_y = min([coord[1] for coord in sign])
         bot_x = max([coord[0] for coord in sign])
         bot_y = max([coord[1] for coord in sign])
-        draw.rectangle((top_x, top_y, bot_x, bot_y), fill=(255, 0, 0, 50))
+        draw.rectangle((top_x, top_y, bot_x, bot_y), fill=(255, 0, 0))
     
     img = np.array(img)
     return img
