@@ -47,7 +47,7 @@ class PCADefense():
         pca.fit(client_params)
         transformed_points = pca.transform(client_params)
 
-        selected_idxs = self.euclidean_distance_remove(transformed_points, 2, plot=True)
+        selected_idxs = self.euclidean_distance_remove(transformed_points, 4, plot=True)
         #selected_idxs = self.isolation_forest(transformed_points)
         selected_client_nets = [client_nets[i] for i in selected_idxs]
 

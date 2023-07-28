@@ -5,7 +5,7 @@ class Krum():
     def __init__(self, dataloader, n_attackers):
         self.dataloader = dataloader
         self.byzantine_client_num = n_attackers
-        self.krum_param_m = 4
+        self.krum_param_m = 6
     
     def aggregate(self, net, client_nets, selected):
         model_list = []
