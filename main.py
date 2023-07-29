@@ -50,8 +50,6 @@ def filename_to_arr(filename):
     with open(Path("./balanced_data", filename), "r") as file:
         return file.read().splitlines()
 
-random.seed(9)
-
 def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defence_param={}, lr=0.001, n_attackers=4, balance_data=False):
     zod_frames = ZodFrames(dataset_root="/mnt/ZOD", version="full")
 
@@ -64,7 +62,8 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
         frames_all = [frame for frame in frames_all if frame in ground_truth]
     else:
         frames_all = list(ground_truth)
-        
+    
+    random.seed(3)
     #random_order = [int(frame) for frame in frames_all][:int(len(frames_all)*PERCENTAGE_OF_DATA)]
     random_order = frames_all[:int(len(frames_all)*PERCENTAGE_OF_DATA)]
     random.shuffle(random_order)
@@ -100,7 +99,9 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
     aggregator = defence(dataloader=defenceloader, **defence_param)
     clients = [HonestClient() for _ in range(CLIENTS-n_attackers)]
     clients.extend([attacker(**attack_param) for _ in range(n_attackers)])
+    random.seed(4)
     random.shuffle(clients)
+    selects = [random.sample(range(CLIENTS), SELECT_CLIENTS) for _ in range(GLOBAL_ROUNDS)]
 
     compromised_clients_idx = [i for i in range(len(clients)) if clients[i].__class__ != HonestClient]
     print("Compromised:", compromised_clients_idx)
@@ -114,7 +115,7 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
     rejection_stats = []
     for round in range(1, GLOBAL_ROUNDS+1):
         print("ROUND", round)
-        selected = random.sample(range(CLIENTS), SELECT_CLIENTS)
+        selected = selects[round-1]
         train_losses = []
         nets = []
         for client_idx in selected:
@@ -247,8 +248,8 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
     
     return score
 
-
-
+run_federated()
+exit()
 
 # run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_add_square(color=(255.0, 0, 0), position="random", n_squares=7, random_size=True), "change_target_func":target_turn(strength=8), "p":0.3, "train_neurotoxin":False})
 # run_federated(attacker=BackdoorAttack, defence=LFR, defence_param={"n_remove":4}, attack_param={"add_backdoor_func": img_add_square(color=(255.0, 0, 0), position="random", n_squares=7, random_size=True), "change_target_func":target_turn(strength=8), "p":0.3, "train_neurotoxin":False})
