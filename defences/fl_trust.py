@@ -43,4 +43,5 @@ class FLTrust():
         vec_to_state_dict(result_state_vec, result_state_dict, nbt)
         net.load_state_dict(result_state_dict)
 
-        return net, weights.cpu().numpy()
+        weights = weights.cpu().numpy()
+        return net, weights/weights.sum()
