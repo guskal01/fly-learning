@@ -6,7 +6,7 @@ import numpy as np
 from torch.utils.data import Dataset, DataLoader
 
 class ShuffleAttacker():
-    def __init__(self):
+    def __init__(self, scaling_factor):
         self.model = None
         self.weight_keys = [
             "model.classifier.0.weight",
@@ -98,6 +98,7 @@ class ShuffleAttacker():
 
             "model.features.16.0.weight",
         ]
+        self.scaling_factor = scaling_factor
 
     def train_client(self, net, opt, dataset):
         train_loss = self.train(net, opt, dataset)
@@ -127,15 +128,12 @@ class ShuffleAttacker():
     def attack(self):
         #self.shuffle_linear(0,1,0,1)
 
-        # self.shuffle_linear_random(0,1)
-        # self.shuffle_linear_random(1,2)
-        # self.shuffle_linear_random(2,3)
-        #self.shuffle_conv(0,1,0,1,scaling_factor=1.0)
-        #self.shuffle_conv_random(2, 3)
+        self.shuffle_linear_random(0,1, self.scaling_factor)
+        self.shuffle_linear_random(1,2, self.scaling_factor)
+        self.shuffle_linear_random(2,3, self.scaling_factor)
 
-        for i in range(1,len(self.conv_weights)):
-            #print(f"Done: {i}")
-            self.shuffle_conv_random(i-1, i)
+        # for i in range(1,len(self.conv_weights)):
+        #     self.shuffle_conv_random(i-1, i, self.scaling_factor)
         return self.model
 
     def shuffle_linear(self, layer1_idx, layer2_idx, row1, row2, scaling_factor=1.0):
