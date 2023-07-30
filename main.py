@@ -301,3 +301,9 @@ for i in range(5):
 ### PCA p=0.3 5 times
 for i in range(5):
     run_federated(attacker=BackdoorAttack, defence=PCADefense, attack_param={"add_backdoor_func": img_add_square(color=(255.0, 0, 0), square_size=0.1, position="random"), "change_target_func":target_turn(strength=8), "p":0.3, "train_neurotoxin":False})
+#run_federated(attacker=ExampleAttack, defence=BulyanDefense, defence_param={"n_attackers": 2}, n_attackers=4)
+#run_federated(attacker=ExampleAttack, defence=LossDefense, defence_param={"n_remove": 2}, n_attackers=4)
+#run_federated(attacker=ExampleAttack, defence=LFR_Trust, defence_param={"n_remove": 2}, n_attackers=4)
+#run_federated(attacker=ExampleAttack, defence=Krum, defence_param={"n_attackers": 2}, n_attackers=4)
+
+run_federated(attacker=ShuffleAttacker, attack_param={"scaling_factor": 1.2}, defence=LossDefense, defence_param={"n_remove": 2}, n_attackers=4)
