@@ -31,3 +31,13 @@ def vec_to_net(vec, nbt):
 
 def net_to_params(net):
     return torch.cat([torch.flatten(x) for x in net.parameters()])
+
+def weighted_avg(net, client_nets, weights):
+    state_dict = net.state_dict()
+        
+    for key in state_dict:
+        state_dict[key] = sum([x[key]*weights[i] for i, x in enumerate(client_nets)])
+    
+    net.load_state_dict(state_dict)
+    return net, None
+
