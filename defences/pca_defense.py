@@ -28,9 +28,10 @@ def state_dict_to_vec_linear(state_dict):
     return torch.cat([torch.flatten(state_dict[key]) for key in state_dict if key in layers])
 
 class PCADefense():
-    def __init__(self, dataloader):
+    def __init__(self, dataloader, n_remove):
         self.dataloader = dataloader
         self.random_idxs = None
+        self.n_remove = n_remove
     
     def aggregate(self, net, client_nets, selected):
         state_dict = net.state_dict()
@@ -47,7 +48,7 @@ class PCADefense():
         pca.fit(client_params)
         transformed_points = pca.transform(client_params)
 
-        selected_idxs = self.euclidean_distance_remove(transformed_points, 4, plot=True)
+        selected_idxs = self.euclidean_distance_remove(transformed_points, self.n_remove, plot=True)
         #selected_idxs = self.isolation_forest(transformed_points)
         selected_client_nets = [client_nets[i] for i in selected_idxs]
 
