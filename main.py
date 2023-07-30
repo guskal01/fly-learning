@@ -248,7 +248,8 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
     
     return score
 
-run_federated()
+for i in range(50):
+    run_federated()
 exit()
 
 # run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_add_square(color=(255.0, 0, 0), position="random", n_squares=7, random_size=True), "change_target_func":target_turn(strength=8), "p":0.3, "train_neurotoxin":False})
