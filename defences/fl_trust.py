@@ -22,12 +22,12 @@ class FLTrust():
                 loss.backward()
                 opt.step()
 
-        server_state_vec, _ = net_to_vec(net)
-        server_delta = net_to_vec(server_model)[0] - server_state_vec
+        server_state_vec = net_to_vec(net)
+        server_delta = net_to_vec(server_model) - server_state_vec
 
         deltas = torch.zeros((len(client_nets), len(server_state_vec))).to(device)
         for i,client_net in enumerate(client_nets):
-            v, nbt = state_dict_to_vec(client_net)
+            v = state_dict_to_vec(client_net)
             deltas[i] = v - server_state_vec
             deltas[i] *= server_delta.norm() / deltas[i].norm()
 
@@ -37,11 +37,7 @@ class FLTrust():
 
         print(weights)
 
-        result_state_vec = server_state_vec + ((deltas*weights.unsqueeze(1))/weights.sum()).sum(dim=0)
-
-        result_state_dict = net.state_dict()
-        vec_to_state_dict(result_state_vec, result_state_dict, nbt)
-        net.load_state_dict(result_state_dict)
+        net = weighted_avg(net, client_nets, weights)
 
         weights = weights.cpu().numpy()
         return net, weights/weights.sum()
