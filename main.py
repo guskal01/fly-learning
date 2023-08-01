@@ -230,6 +230,7 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
         "score": score,
         "score": sum(round_test_losses[-10:])/10,
         "backdoor_score": backdoor_score,
+        "final_test_loss":round_test_losses[-1],
         "train_loss": round_train_losses,
         "test_loss": round_test_losses,
         "backdoor_test_loss": round_backdoor_test_losses,
@@ -271,7 +272,6 @@ for defence in [(FedAvg, {}), (LFR, {"n_remove":4}), (Krum, {"n_attackers":2, "m
 # run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_add_square(color=(255.0, 0, 0), position="random", n_squares=7, random_size=True), "change_target_func":target_turn(strength=8), "p":0.3, "train_neurotoxin":False})
 # run_federated(attacker=BackdoorAttack, defence=LFR, defence_param={"n_remove":4}, attack_param={"add_backdoor_func": img_add_square(color=(255.0, 0, 0), position="random", n_squares=7, random_size=True), "change_target_func":target_turn(strength=8), "p":0.3, "train_neurotoxin":False})
 
-#### COLOR TESTING ####
 
 # Natural red
 for i in range(3):
