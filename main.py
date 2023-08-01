@@ -187,7 +187,7 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
     plt.savefig(f"{path}/plots/loss.png")
     plt.clf()
 
-    if (aggregated_clients_stats):
+    if (aggregated_clients_stats and False):
         plt.bar([key for key in aggregated_clients_stats if key in compromised_clients_idx], [1-aggregated_clients_stats[key][0]/aggregated_clients_stats[key][1] for key in aggregated_clients_stats if key in compromised_clients_idx], color="tab:red", label="Malicious")
         plt.bar([key for key in aggregated_clients_stats if not key in compromised_clients_idx], [1-aggregated_clients_stats[key][0]/aggregated_clients_stats[key][1] for key in aggregated_clients_stats if not key in compromised_clients_idx], color="tab:blue", label="Benign")
         plt.ylim(0, 1)
@@ -250,13 +250,15 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
     return score
 
 
-for defence in [(FedAvg, {}), (LFR, {"n_remove":4}), (Krum, {"n_attackers":2, "m":1}), (LossDefense, {"n_remove":4}), (PCADefense, {"n_remove":4}), (TrimmedMean, {}), (NormBounding, {}), (FLTrust, {}), (BulyanDefense, {"n_attackers": 4}), (FoolsGoldDefense, {})]:
+for defence in [(FedAvg, {}), (LFR, {"n_remove":4}), (LossDefense, {"n_remove":4}), (Krum, {"n_attackers":4, "m":1}), (Krum, {"n_attackers":4, "m":6}), (PCADefense, {"n_remove":4}), (TrimmedMean, {}), (NormBounding, {}), (FLTrust, {}), (BulyanDefense, {"n_attackers": 4}), (FoolsGoldDefense, {})]:
 
-    for attack in [(HonestClient, {}), (ExampleAttack, {}), (SimilarModel, {"stealthiness":1e9, "multiply_changes":1}), (ShuffleAttacker, {}), (GAClient, {}), (BackdoorAttack, {"add_backdoor_func": img_add_square(), "change_target_func":target_turn(), "p":0.3}), (BackdoorAttack, {"add_backdoor_func": img_add_square(), "change_target_func":target_turn(), "p":0.5})]:
+    for attack in [(HonestClient, {}), (ExampleAttack, {}), (SimilarModel, {"stealthiness":1e9, "multiply_changes":1}), (ShuffleAttacker, {"scaling_factor":1}), (GAClient, {}), (BackdoorAttack, {"add_backdoor_func": img_add_square(), "change_target_func":target_turn(), "p":0.3}), (BackdoorAttack, {"add_backdoor_func": img_add_square(), "change_target_func":target_turn(), "p":0.5})]:
 
-        if defence[0] in [Krum, TrimmedMean, NormBounding]:
+        if defence[0] not in [FLTrust, Krum]:
             continue
         if attack[0] in [BackdoorAttack]:
+            continue
+        if attack[0] not in [ShuffleAttacker]:
             continue
 
         print("RUNNING", defence[0].__name__, attack[0].__name__)
@@ -268,6 +270,7 @@ for defence in [(FedAvg, {}), (LFR, {"n_remove":4}), (Krum, {"n_attackers":2, "m
             print(e)
             print()
         print(f"RESULT1 {defence[0].__name__} {attack[0].__name__}: {score:.4f}")
+exit()
 
 # run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_add_square(color=(255.0, 0, 0), position="random", n_squares=7, random_size=True), "change_target_func":target_turn(strength=8), "p":0.3, "train_neurotoxin":False})
 # run_federated(attacker=BackdoorAttack, defence=LFR, defence_param={"n_remove":4}, attack_param={"add_backdoor_func": img_add_square(color=(255.0, 0, 0), position="random", n_squares=7, random_size=True), "change_target_func":target_turn(strength=8), "p":0.3, "train_neurotoxin":False})

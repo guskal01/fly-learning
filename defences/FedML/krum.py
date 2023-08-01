@@ -30,10 +30,10 @@ class Krum():
     ):
         num_client = len(raw_client_grad_list)
         # in the Krum paper, it says 2 * byzantine_client_num + 2 < client #
-        if not 2 * self.byzantine_client_num + 2 <= num_client - self.krum_param_m:
-            raise ValueError(
-                "byzantine_client_num conflicts with requirements in Krum: 2 * byzantine_client_num + 2 < client number - krum_param_m"
-            )
+        #if not 2 * self.byzantine_client_num + 2 <= num_client - self.krum_param_m:
+        #    raise ValueError(
+        #        "byzantine_client_num conflicts with requirements in Krum: 2 * byzantine_client_num + 2 < client number - krum_param_m"
+        #    )
 
         vec_local_w = [
             self.vectorize_weight(raw_client_grad_list[i][1])
@@ -43,6 +43,7 @@ class Krum():
         score_index = torch.argsort(
             torch.Tensor(krum_scores)
         ).tolist()  # indices; ascending
+        assert len(score_index) >= self.krum_param_m
         score_index = score_index[0 : self.krum_param_m]
         return [raw_client_grad_list[i] for i in score_index], [1 if i in score_index else 0 for i in range(len(raw_client_grad_list))]
 
@@ -78,6 +79,7 @@ class Krum():
                         ).item() ** 2
                     )
             dists.sort()  # ascending
+            assert len(dists) >= num_client - self.byzantine_client_num - 2
             score = dists[0 : num_client - self.byzantine_client_num - 2]
             krum_scores.append(sum(score))
         return krum_scores
