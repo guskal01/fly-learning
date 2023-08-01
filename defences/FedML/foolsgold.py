@@ -10,16 +10,23 @@ class FoolsGoldDefense():
     
     def aggregate(self, net, client_nets, selected):
         model_list = []
+        nbt = None
         for i,x in enumerate(client_nets):
             for key in net.state_dict():
                 x[key] -= net.state_dict()[key]
+                if 'num_batches_tracked' in key:
+                    if nbt is not None: assert x[key] == nbt
+                    nbt = x.pop(key)
             model_list.append((i, x))
         result, alphas = self.defend_before_aggregation(model_list)
 
         state_dict = net.state_dict()
         
         for key in state_dict:
-            state_dict[key] = sum([x[1][key] for x in result]) / len(result) + state_dict[key]
+            if 'num_batches_tracked' in key:
+                state_dict[key] = nbt
+            else:
+                state_dict[key] = sum([x[1][key] for x in result]) / len(result) + state_dict[key]
         
         net.load_state_dict(state_dict)
         return net, alphas

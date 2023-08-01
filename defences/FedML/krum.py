@@ -2,10 +2,10 @@ import torch
 from constants import *
 
 class Krum():
-    def __init__(self, dataloader, n_attackers):
+    def __init__(self, dataloader, n_attackers, m):
         self.dataloader = dataloader
         self.byzantine_client_num = n_attackers
-        self.krum_param_m = 6
+        self.krum_param_m = m
     
     def aggregate(self, net, client_nets, selected):
         model_list = []

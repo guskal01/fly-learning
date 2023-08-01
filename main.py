@@ -248,9 +248,15 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
     
     return score
 
-for defence in [(FedAvg, {}), (LFR, {"n_remove":4}), (Krum, {"n_attackers":2}), (LossDefense, {"n_remove":4}), (PCADefense, {"n_remove":4}), (TrimmedMean, {}), (NormBounding, {}), (FLTrust, {}), (BulyanDefense, {"n_attackers": 4})]:
+
+for defence in [(FedAvg, {}), (LFR, {"n_remove":4}), (Krum, {"n_attackers":2, "m":1}), (LossDefense, {"n_remove":4}), (PCADefense, {"n_remove":4}), (TrimmedMean, {}), (NormBounding, {}), (FLTrust, {}), (BulyanDefense, {"n_attackers": 4}), (FoolsGoldDefense, {})]:
 
     for attack in [(HonestClient, {}), (ExampleAttack, {}), (SimilarModel, {"stealthiness":1e9, "multiply_changes":1}), (ShuffleAttacker, {}), (GAClient, {}), (BackdoorAttack, {"add_backdoor_func": img_add_square(), "change_target_func":target_turn(), "p":0.3}), (BackdoorAttack, {"add_backdoor_func": img_add_square(), "change_target_func":target_turn(), "p":0.5})]:
+
+        if defence[0] in [Krum, TrimmedMean, NormBounding]:
+            continue
+        if attack[0] in [BackdoorAttack]:
+            continue
 
         print("RUNNING", defence[0].__name__, attack[0].__name__)
         score = float("nan")

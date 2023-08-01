@@ -1,5 +1,6 @@
 __pycache__
 results/
+results_histogram/
 *.npz
 *.png
 *.out
