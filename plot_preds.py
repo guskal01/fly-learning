@@ -240,9 +240,7 @@ def load_ground_truth(path):
             gt[f] = np.array(gt[f])
         return gt
 
-def visualize_holistic_paths(model, path):
-    ids = ["049179", "027233", "011239", "094839", "074220", "000001"]
-
+def visualize_holistic_paths(model, path, ids):
     zod_frames = ZodFrames(dataset_root="/mnt/ZOD", version='full')
 
     transform = transforms.Compose([
@@ -269,4 +267,5 @@ if __name__ == "__main__":
     model = Net().to(device)
     model.load_state_dict(torch.load(path))
 
-    visualize_holistic_paths(model, "results/test")
+    ids = ["049179", "027233", "011239", "094839", "074220", "000001"]
+    visualize_holistic_paths(model, "results/test", ids)

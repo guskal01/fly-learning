@@ -44,7 +44,12 @@ from defences.trimmed_mean import TrimmedMean
 from defences.FedML.geometric_median_defense import GeometricMedianDefense
 from defences.FedML.foolsgold import FoolsGoldDefense
 from defences.bulyan_defense import BulyanDefense
-from defences.lfr_trust import LFR_Trust
+from defences.ensembles.lfr_trust import LFR_Trust
+from defences.ensembles.loss_lfr import LossLFR
+from defences.ensembles.lfr_bucket import LFRBucket
+from defences.ensembles.lfr_bucket_v2 import LFRBucketV2
+from defences.ensembles.loss_lfr_v2 import LossLFRV2
+from defences.median import Median
 
 def filename_to_arr(filename):
     with open(Path("./balanced_data", filename), "r") as file:
@@ -242,7 +247,9 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
 
     holistic_images_path = f"{path}/holistic_paths"
     os.mkdir(holistic_images_path)
-    visualize_holistic_paths(net, f"{holistic_images_path}")
+
+    ids = random_order[:10] #["049179", "027233", "011239", "094839", "074220", "000001"]
+    visualize_holistic_paths(net, f"{holistic_images_path}", ids)
     
     if attacker == BackdoorAttack:
         get_backdoor_result(net, attack_param["add_backdoor_func"], attack_param["change_target_func"], random.sample(frames_all, 100),path)
@@ -272,58 +279,53 @@ for defence in [(FedAvg, {}), (LFR, {"n_remove":4}), (LossDefense, {"n_remove":4
         print(f"RESULT1 {defence[0].__name__} {attack[0].__name__}: {score:.4f}")
 exit()
 
-# run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_add_square(color=(255.0, 0, 0), position="random", n_squares=7, random_size=True), "change_target_func":target_turn(strength=8), "p":0.3, "train_neurotoxin":False})
-# run_federated(attacker=BackdoorAttack, defence=LFR, defence_param={"n_remove":4}, attack_param={"add_backdoor_func": img_add_square(color=(255.0, 0, 0), position="random", n_squares=7, random_size=True), "change_target_func":target_turn(strength=8), "p":0.3, "train_neurotoxin":False})
+
+run_federated(attacker=HonestClient, defence=Median, n_attackers=4)
+# run_federated(attacker=SimilarModel, attack_param={"stealthiness": 1e9, "multiply_changes": 1}, defence=LossLFRV2, n_attackers=4)
+
+# run_federated(attacker=GAClient, defence=LFRBucketV2, defence_param={"n_remove": 4}, n_attackers=4)
+
+# run_federated(attacker=HonestClient, defence=NormBounding, n_attackers=4)
+# try: run_federated(attacker=HonestClient, defence=LossLFR, defence_param={"n_remove": 4}, n_attackers=4)
+# except: pass
+# try: run_federated(attacker=ExampleAttack, defence=LossLFR, defence_param={"n_remove": 4}, n_attackers=4)
+# except: pass
+# try: run_federated(attacker=ShuffleAttacker, attack_param={"scaling_factor": 1.0}, defence=LossLFR, defence_param={"n_remove": 4}, n_attackers=4)
+# except: pass
+# try: run_federated(attacker=GAClient, defence=LossLFR, defence_param={"n_remove": 4}, n_attackers=4)
+# except: pass
+# try: run_federated(attacker=SimilarModel, attack_param={"stealthiness": 1e9, "multiply_changes": 1}, defence=LossLFR, defence_param={"n_remove": 4}, n_attackers=4)
+# except: pass
+
+# try: run_federated(attacker=HonestClient, defence=TrimmedMean, n_attackers=4)
+# except: pass
+# try: run_federated(attacker=ExampleAttack, defence=TrimmedMean, n_attackers=4)
+# except: pass
+# try: run_federated(attacker=ShuffleAttacker, attack_param={"scaling_factor": 1.0}, defence=TrimmedMean, n_attackers=4)
+# except: pass
+# try: run_federated(attacker=GAClient, defence=TrimmedMean, n_attackers=4)
+# except: pass
+# try: run_federated(attacker=SimilarModel, attack_param={"stealthiness": 1e9, "multiply_changes": 1}, defence=TrimmedMean, n_attackers=4)
+# except: pass
 
 
-# Natural red
-for i in range(3):
-    run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_add_square(color=(135, 0, 4), position="random", square_size=0.1), "change_target_func":target_turn(strength=8), "p":0.3, "train_neurotoxin":False})
 
-# Natural white
-for i in range(3):
-    run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_add_square(color=(236, 237, 243), position="random", square_size=0.1), "change_target_func":target_turn(strength=8), "p":0.3, "train_neurotoxin":False})
+# run_federated(attacker=ShuffleAttacker, attack_param={"scaling_factor": 1.0}, defence=LFR_Trust, defence_param={"n_remove": 4, "method": 0}, n_attackers=4)
+# run_federated(attacker=ShuffleAttacker, attack_param={"scaling_factor": 1.0}, defence=LFR_Trust, defence_param={"n_remove": 4, "method": 1}, n_attackers=4)
+# run_federated(attacker=ShuffleAttacker, attack_param={"scaling_factor": 1.0}, defence=LFR_Trust, defence_param={"n_remove": 4, "method": 2}, n_attackers=4)
 
-# Natural green
-for i in range(3):
-    run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_add_square(color=(96, 115, 51), position="random", square_size=0.1), "change_target_func":target_turn(strength=8), "p":0.3, "train_neurotoxin":False})
+# run_federated(attacker=ExampleAttack, defence=LFR_Trust, defence_param={"n_remove": 4, "method": 0}, n_attackers=4)
+# run_federated(attacker=ExampleAttack, defence=LFR_Trust, defence_param={"n_remove": 4, "method": 1}, n_attackers=4)
+# run_federated(attacker=ExampleAttack, defence=LFR_Trust, defence_param={"n_remove": 4, "method": 2}, n_attackers=4)
 
-### RANDOM SQUARES WITH RANDOM SIZE VS DEFENSE ###
-run_federated(attacker=BackdoorAttack, defence=LFR, defence_param={"n_remove":4}, attack_param={"add_backdoor_func": img_add_square(color=(255.0, 0, 0), position="random", n_squares=7, random_size=True), "change_target_func":target_turn(strength=8), "p":0.3, "train_neurotoxin":False})
-run_federated(attacker=BackdoorAttack, defence=Krum, defence_param={"n_attackers":4}, attack_param={"add_backdoor_func": img_add_square(color=(255.0, 0, 0), position="random", n_squares=7, random_size=True), "change_target_func":target_turn(strength=8), "p":0.3, "train_neurotoxin":False})
+# run_federated(attacker=HonestClient, defence=LFR_Trust, defence_param={"n_remove": 4, "method": 0}, n_attackers=4)
+# run_federated(attacker=HonestClient, defence=LFR_Trust, defence_param={"n_remove": 4, "method": 1}, n_attackers=4)
+# run_federated(attacker=HonestClient, defence=LFR_Trust, defence_param={"n_remove": 4, "method": 2}, n_attackers=4)
 
+# run_federated(attacker=GAClient, defence=LFR_Trust, defence_param={"n_remove": 4, "method": 0}, n_attackers=4)
+# run_federated(attacker=GAClient, defence=LFR_Trust, defence_param={"n_remove": 4, "method": 1}, n_attackers=4)
+# run_federated(attacker=GAClient, defence=LFR_Trust, defence_param={"n_remove": 4, "method": 2}, n_attackers=4)
 
-
-### LFR p=0.3 5 times
-for i in range(5):
-    run_federated(attacker=BackdoorAttack, defence=LFR, defence_param={"n_remove":4}, attack_param={"add_backdoor_func": img_add_square(color=(255.0, 0, 0), square_size=0.1, position="random"), "change_target_func":target_turn(strength=8), "p":0.3, "train_neurotoxin":False})
-
-### LFR p=0.5 5 times
-for i in range(5):
-    run_federated(attacker=BackdoorAttack, defence=LFR, defence_param={"n_remove":4}, attack_param={"add_backdoor_func": img_add_square(color=(255.0, 0, 0), square_size=0.1, position="random"), "change_target_func":target_turn(strength=8), "p":0.5, "train_neurotoxin":False})
-
-### KRUM p=0.3 5 times
-for i in range(5):
-    run_federated(attacker=BackdoorAttack, defence=Krum, defence_param={"n_attackers":4}, attack_param={"add_backdoor_func": img_add_square(color=(255.0, 0, 0), square_size=0.1, position="random"), "change_target_func":target_turn(strength=8), "p":0.3, "train_neurotoxin":False})
-
-### KRUM p=0.5 5 times
-for i in range(5):
-    run_federated(attacker=BackdoorAttack, defence=Krum, defence_param={"n_attackers":4}, attack_param={"add_backdoor_func": img_add_square(color=(255.0, 0, 0), square_size=0.1, position="random"), "change_target_func":target_turn(strength=8), "p":0.5, "train_neurotoxin":False})
-
-### LossDefense p=0.3 5 times
-for i in range(5):
-    run_federated(attacker=BackdoorAttack, defence=LossDefense, defence_param={"n_remove":4}, attack_param={"add_backdoor_func": img_add_square(color=(255.0, 0, 0), square_size=0.1, position="random"), "change_target_func":target_turn(strength=8), "p":0.3, "train_neurotoxin":False})
-
-### LossDefense p=0.5 5 times
-for i in range(5):
-    run_federated(attacker=BackdoorAttack, defence=LossDefense, defence_param={"n_remove":4}, attack_param={"add_backdoor_func": img_add_square(color=(255.0, 0, 0), square_size=0.1, position="random"), "change_target_func":target_turn(strength=8), "p":0.5, "train_neurotoxin":False})
-
-### PCA p=0.3 5 times
-for i in range(5):
-    run_federated(attacker=BackdoorAttack, defence=PCADefense, attack_param={"add_backdoor_func": img_add_square(color=(255.0, 0, 0), square_size=0.1, position="random"), "change_target_func":target_turn(strength=8), "p":0.3, "train_neurotoxin":False})
-#run_federated(attacker=ExampleAttack, defence=BulyanDefense, defence_param={"n_attackers": 2}, n_attackers=4)
-#run_federated(attacker=ExampleAttack, defence=LossDefense, defence_param={"n_remove": 2}, n_attackers=4)
-#run_federated(attacker=ExampleAttack, defence=LFR_Trust, defence_param={"n_remove": 2}, n_attackers=4)
-#run_federated(attacker=ExampleAttack, defence=Krum, defence_param={"n_attackers": 2}, n_attackers=4)
-
-run_federated(attacker=ShuffleAttacker, attack_param={"scaling_factor": 1.2}, defence=LossDefense, defence_param={"n_remove": 2}, n_attackers=4)
+# run_federated(attacker=SimilarModel, attack_param={"stealthiness": 1e9, "multiply_changes": 1}, defence=LFR_Trust, defence_param={"n_remove": 4, "method": 0}, n_attackers=4)
+# run_federated(attacker=SimilarModel, attack_param={"stealthiness": 1e9, "multiply_changes": 1}, defence=LFR_Trust, defence_param={"n_remove": 4, "method": 1}, n_attackers=4)
+# run_federated(attacker=SimilarModel, attack_param={"stealthiness": 1e9, "multiply_changes": 1}, defence=LFR_Trust, defence_param={"n_remove": 4, "method": 2}, n_attackers=4)
