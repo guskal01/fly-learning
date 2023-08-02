@@ -49,7 +49,6 @@ from defences.ensembles.loss_lfr import LossLFR
 from defences.ensembles.lfr_bucket import LFRBucket
 from defences.ensembles.lfr_bucket_v2 import LFRBucketV2
 from defences.ensembles.loss_lfr_v2 import LossLFRV2
-from defences.median import Median
 
 def filename_to_arr(filename):
     with open(Path("./balanced_data", filename), "r") as file:
@@ -280,7 +279,6 @@ for defence in [(FedAvg, {}), (LFR, {"n_remove":4}), (LossDefense, {"n_remove":4
 exit()
 
 
-run_federated(attacker=HonestClient, defence=Median, n_attackers=4)
 # run_federated(attacker=SimilarModel, attack_param={"stealthiness": 1e9, "multiply_changes": 1}, defence=LossLFRV2, n_attackers=4)
 
 # run_federated(attacker=GAClient, defence=LFRBucketV2, defence_param={"n_remove": 4}, n_attackers=4)
