@@ -15,7 +15,10 @@ class LFR():
         for client_idx in range(len(client_nets)):
             net_without_client = copy.deepcopy(self.aggregator.aggregate(net, client_nets[:client_idx]+client_nets[client_idx+1:])[0])
             scores.append([self.loss_impact(net_all, net_without_client), client_idx])
+            print(f"Client idx {client_idx}, Score {scores[-1]}")
 
+        print(scores)
+        
         scores.sort()
         scores = scores[::-1]
 
