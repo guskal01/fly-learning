@@ -36,8 +36,8 @@ def weighted_avg(net, client_nets, weights):
     state_dict = net.state_dict()
         
     for key in state_dict:
-        state_dict[key] = sum([x[key]*weights[i] for i, x in enumerate(client_nets)])
+        state_dict[key] = sum([x[key]*weights[i] for i, x in enumerate(client_nets)])/weights.sum() 
     
     net.load_state_dict(state_dict)
-    return net, None
+    return net
 
