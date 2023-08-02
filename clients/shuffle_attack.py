@@ -99,11 +99,17 @@ class ShuffleAttacker():
             "model.features.16.0.weight",
         ]
         self.scaling_factor = scaling_factor
+        self.train_first = True
 
     def train_client(self, net, opt, dataset):
-        train_loss = self.train(net, opt, dataset)
-        self.model = net
-        net = self.attack()
+        if (self.train_first):
+            train_loss = self.train(net, opt, dataset)
+            self.model = net
+            net = self.attack()
+        else:
+            self.model = net
+            net = self.attack()
+            train_loss = self.train(net, opt, dataset)
         return train_loss
     
     def train(self, net, opt, dataset):
@@ -122,6 +128,7 @@ class ShuffleAttacker():
                 opt.step()
 
                 batch_train_losses.append(loss.item())
+                if (not self.train_first): break
             epoch_train_losses.append(sum(batch_train_losses)/len(batch_train_losses))
         return epoch_train_losses
 
