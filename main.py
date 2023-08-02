@@ -3,6 +3,7 @@ import random
 from datetime import datetime
 import os
 import json
+import traceback
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -255,3 +256,78 @@ def run_federated(attacker=HonestClient, attack_param={}, defence=FedAvg, defenc
     
     return score
 
+for defence in [(FedAvg, {}), (LFR, {"n_remove":4}), (LossDefense, {"n_remove":4}), (Krum, {"n_attackers":4, "m":1}), (Krum, {"n_attackers":4, "m":6}), (PCADefense, {"n_remove":4}), (FLTrust, {}), (TrimmedMean, {}), (NormBounding, {}), (BulyanDefense, {"n_attackers": 4}), (FoolsGoldDefense, {})]:
+
+    for attack in [(HonestClient, {}), (ExampleAttack, {}), (SimilarModel, {"stealthiness":1e9, "multiply_changes":1}), (ShuffleAttacker, {"scaling_factor":1}), (GAClient, {})]:
+
+        
+        if not (defence[0] == FLTrust and attack[0] == SimilarModel):
+            continue
+
+        print("RUNNING", defence[0].__name__, attack[0].__name__)
+        score = float("nan")
+        try:
+            score = run_federated(attacker=attack[0], attack_param=attack[1], defence=defence[0], defence_param=defence[1])
+        except Exception as e:
+            print("Crashed :( skipping.")
+            print(e)
+            traceback.print_exc()
+            print()
+        print(f"RESULT1 {defence[0].__name__} {attack[0].__name__}: {score:.4f}")
+exit()
+
+# run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_add_square(color=(255.0, 0, 0), position="random", n_squares=7, random_size=True), "change_target_func":target_turn(strength=8), "p":0.3, "train_neurotoxin":False})
+# run_federated(attacker=BackdoorAttack, defence=LFR, defence_param={"n_remove":4}, attack_param={"add_backdoor_func": img_add_square(color=(255.0, 0, 0), position="random", n_squares=7, random_size=True), "change_target_func":target_turn(strength=8), "p":0.3, "train_neurotoxin":False})
+
+
+# Natural red
+for i in range(3):
+    run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_add_square(color=(135, 0, 4), position="random", square_size=0.1), "change_target_func":target_turn(strength=8), "p":0.3, "train_neurotoxin":False})
+
+# Natural white
+for i in range(3):
+    run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_add_square(color=(236, 237, 243), position="random", square_size=0.1), "change_target_func":target_turn(strength=8), "p":0.3, "train_neurotoxin":False})
+
+# Natural green
+for i in range(3):
+    run_federated(attacker=BackdoorAttack, attack_param={"add_backdoor_func": img_add_square(color=(96, 115, 51), position="random", square_size=0.1), "change_target_func":target_turn(strength=8), "p":0.3, "train_neurotoxin":False})
+
+### RANDOM SQUARES WITH RANDOM SIZE VS DEFENSE ###
+run_federated(attacker=BackdoorAttack, defence=LFR, defence_param={"n_remove":4}, attack_param={"add_backdoor_func": img_add_square(color=(255.0, 0, 0), position="random", n_squares=7, random_size=True), "change_target_func":target_turn(strength=8), "p":0.3, "train_neurotoxin":False})
+run_federated(attacker=BackdoorAttack, defence=Krum, defence_param={"n_attackers":4}, attack_param={"add_backdoor_func": img_add_square(color=(255.0, 0, 0), position="random", n_squares=7, random_size=True), "change_target_func":target_turn(strength=8), "p":0.3, "train_neurotoxin":False})
+
+
+
+### LFR p=0.3 5 times
+for i in range(5):
+    run_federated(attacker=BackdoorAttack, defence=LFR, defence_param={"n_remove":4}, attack_param={"add_backdoor_func": img_add_square(color=(255.0, 0, 0), square_size=0.1, position="random"), "change_target_func":target_turn(strength=8), "p":0.3, "train_neurotoxin":False})
+
+### LFR p=0.5 5 times
+for i in range(5):
+    run_federated(attacker=BackdoorAttack, defence=LFR, defence_param={"n_remove":4}, attack_param={"add_backdoor_func": img_add_square(color=(255.0, 0, 0), square_size=0.1, position="random"), "change_target_func":target_turn(strength=8), "p":0.5, "train_neurotoxin":False})
+
+### KRUM p=0.3 5 times
+for i in range(5):
+    run_federated(attacker=BackdoorAttack, defence=Krum, defence_param={"n_attackers":4}, attack_param={"add_backdoor_func": img_add_square(color=(255.0, 0, 0), square_size=0.1, position="random"), "change_target_func":target_turn(strength=8), "p":0.3, "train_neurotoxin":False})
+
+### KRUM p=0.5 5 times
+for i in range(5):
+    run_federated(attacker=BackdoorAttack, defence=Krum, defence_param={"n_attackers":4}, attack_param={"add_backdoor_func": img_add_square(color=(255.0, 0, 0), square_size=0.1, position="random"), "change_target_func":target_turn(strength=8), "p":0.5, "train_neurotoxin":False})
+
+### LossDefense p=0.3 5 times
+for i in range(5):
+    run_federated(attacker=BackdoorAttack, defence=LossDefense, defence_param={"n_remove":4}, attack_param={"add_backdoor_func": img_add_square(color=(255.0, 0, 0), square_size=0.1, position="random"), "change_target_func":target_turn(strength=8), "p":0.3, "train_neurotoxin":False})
+
+### LossDefense p=0.5 5 times
+for i in range(5):
+    run_federated(attacker=BackdoorAttack, defence=LossDefense, defence_param={"n_remove":4}, attack_param={"add_backdoor_func": img_add_square(color=(255.0, 0, 0), square_size=0.1, position="random"), "change_target_func":target_turn(strength=8), "p":0.5, "train_neurotoxin":False})
+
+### PCA p=0.3 5 times
+for i in range(5):
+    run_federated(attacker=BackdoorAttack, defence=PCADefense, attack_param={"add_backdoor_func": img_add_square(color=(255.0, 0, 0), square_size=0.1, position="random"), "change_target_func":target_turn(strength=8), "p":0.3, "train_neurotoxin":False})
+#run_federated(attacker=ExampleAttack, defence=BulyanDefense, defence_param={"n_attackers": 2}, n_attackers=4)
+#run_federated(attacker=ExampleAttack, defence=LossDefense, defence_param={"n_remove": 2}, n_attackers=4)
+#run_federated(attacker=ExampleAttack, defence=LFR_Trust, defence_param={"n_remove": 2}, n_attackers=4)
+#run_federated(attacker=ExampleAttack, defence=Krum, defence_param={"n_attackers": 2}, n_attackers=4)
+
+run_federated(attacker=ShuffleAttacker, attack_param={"scaling_factor": 1.2}, defence=LossDefense, defence_param={"n_remove": 2}, n_attackers=4)

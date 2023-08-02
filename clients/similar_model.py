@@ -2,6 +2,7 @@ from constants import *
 from models import Net
 from utils import *
 import torch.nn.functional as F
+import torch.nn as nn
 
 from torch.utils.data import DataLoader
 
@@ -32,6 +33,15 @@ class SimilarModel():
         bad_net = Net().to(device)
         bad_net.load_state_dict(net.state_dict())
         bad_opt = torch.optim.Adam(bad_net.parameters(), lr=1e-4)
+
+        for module in bad_net.modules():
+            if isinstance(module, nn.BatchNorm2d):
+                if hasattr(module, 'weight'):
+                    module.weight.requires_grad_(False)
+                if hasattr(module, 'bias'):
+                    module.bias.requires_grad_(False)
+                module.eval()
+        
         for epoch in range(1, 15+1):
             for data, target in dataloader:
                 data, target = data.to(device), target.to(device)

@@ -1,6 +1,7 @@
 __pycache__
 results/
 results_histogram/
+matrix_results/
 *.npz
 *.png
 *.out
