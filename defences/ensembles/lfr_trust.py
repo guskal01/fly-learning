@@ -7,16 +7,20 @@ import copy
 from torch.nn import functional as F
 
 class LFR_Trust():
-    def __init__(self, dataloader, n_remove):
+    def __init__(self, dataloader, n_remove, method):
         self.dataloader = dataloader
         self.avg = FedAvg(dataloader)
         self.aggregator = FLTrust(dataloader)
         self.n_remove = n_remove
+        self.method = method
     
     def aggregate(self, net, client_nets, selected):
-        #return self.fltrust_lfr(net, client_nets, selected)
-        return self.lfr_fltrust(net, client_nets, selected)
-        #return self.hybrid(net, client_nets, selected) # Not working currently (nan values after a while)
+        if (self.method == 0):
+            return self.fltrust_lfr(net, client_nets, selected)
+        if (self.method == 1):
+            return self.lfr_fltrust(net, client_nets, selected)
+        if (self.method == 2):
+            return self.hybrid(net, client_nets, selected) # Not working currently (nan values after a while)
 
     def hybrid(self, net, client_nets, selected):
         scores = self.score_clients(net, client_nets)
@@ -70,7 +74,7 @@ class LFR_Trust():
         for s in scores[:self.n_remove]:
             weights[s[1]] = 0
         weights /= weights.sum()
-        net, _ = weighted_avg(net, client_nets, weights)
+        net = weighted_avg(net, client_nets, weights)
         net = copy.deepcopy(net)
 
         return net, weights
